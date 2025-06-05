@@ -1,7 +1,7 @@
 import apiClient, {_route, _cleanParams, type PaginationResponse} from "@/framework/api/BaseApiClient";;  
 
 export enum ProgramsApi {
-	indexOpen = "/students/v2/programs",
+	indexOpen = "/students/programs/v2",
 	create = "/programs",
 	show = "/programs/:id",
 	update = "/programs/:id",
