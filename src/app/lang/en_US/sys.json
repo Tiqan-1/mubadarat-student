@@ -37,6 +37,9 @@
 		"timeoutMessage": "Login timed out, please log in again!"
 	  },
 	  "login": {
+        "gender": "Gender",
+        "male": "Male",
+        "female": "Female",
 		"name": "Name",
 		"namePlaceholder": "Please enter the name",
 		"userName": "Username",

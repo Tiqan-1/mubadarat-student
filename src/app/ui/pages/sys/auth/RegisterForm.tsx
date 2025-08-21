@@ -1,5 +1,5 @@
  
-import { Button, Form, Input } from "antd";
+import { Button, Flex, Form, Input, Radio } from "antd";
 import { useTranslation } from "react-i18next";
  
 
@@ -7,6 +7,7 @@ import { ReturnButton } from "./components/ReturnButton";
 import { LoginStateEnum, useLoginStateContext } from "./providers/LoginStateProvider";
 import { useSignUP } from "@/framework/store/userStore";
 import { useState } from "react";
+import { Iconify } from "@/app/ui/components/icon";
 
 function RegisterForm() {
 	const { t } = useTranslation();
@@ -36,6 +37,37 @@ function RegisterForm() {
 				]}>
 					<Input placeholder={t("sys.login.name")} />
 				</Form.Item>
+
+
+				<Form.Item name="gender" rules={[ { required: true, message: t("sys.login.passwordPlaceholder") }, ]}>
+
+					<Radio.Group
+					options={[
+						{
+						value: "male",
+						label: (
+							<Flex gap="small" justify="center" align="center" vertical>
+							<Iconify icon="solar:men-broken" size={24} />
+							{t("sys.login.male")}
+							</Flex>
+						),
+						},
+						{
+						value: "female",
+						label: (
+							<Flex gap="small" justify="center" align="center" vertical>
+							<Iconify icon="solar:women-broken" size={24} />
+							{t("sys.login.female")}
+							</Flex>
+						),
+						},
+					]}
+					/>
+
+				</Form.Item>
+
+
+
 				<Form.Item name="email" rules={[
 					{ required: true, message: t("sys.login.emailPlaceholder") },
 					{ type: 'email', message: t("sys.login.emailValidation") }

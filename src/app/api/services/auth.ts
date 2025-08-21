@@ -1,5 +1,4 @@
 import apiClient from "@/framework/api/BaseApiClient";
-
 import type { UserInfo, UserToken } from "@/framework/types/entity";
 
 export interface SignInReq {
@@ -8,6 +7,7 @@ export interface SignInReq {
 }
 export interface SignUpReq extends SignInReq {
 	name: string;
+	gender: "male" | "female";
 }
 export type SignInRes = UserToken & UserInfo;
 

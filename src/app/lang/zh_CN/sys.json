@@ -37,6 +37,9 @@
 		"timeoutMessage": "登录超时，请重新登录！"
 	  },
 	  "login": {
+        "gender": "Gender",
+        "male": "Male",
+        "female": "Female",
 		"name": "姓名",
 		"namePlaceholder": "请输入姓名",
 		"userName": "用户名",
