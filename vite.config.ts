@@ -1,6 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
-
+import tailwindcss from "@tailwindcss/vite";
 import tsconfigPaths from 'vite-tsconfig-paths'
 
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
     server: {
       open: true,
       host: true,
-      port: 1111,
+      port: 1112,
       proxy: {
         "/api": {
           target: "https://mubadarah.ce-svcs.cc/",
@@ -29,6 +29,7 @@ export default defineConfig(({ mode }) => {
   
     plugins: [
       react(),
+      tailwindcss(),
   
       tsconfigPaths(), // add {resolve.alias} from tsconfig {paths} automatically 
   
