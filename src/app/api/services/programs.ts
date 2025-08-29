@@ -1,7 +1,8 @@
 import apiClient, {_route, _cleanParams, type PaginationResponse} from "@/framework/api/BaseApiClient";;  
 
 export enum ProgramsApi {
-	indexOpen = "/students/programs/v2",
+	indexOpen = "students/v3/programs",
+	// indexOpen = "/students/programs/v2",
 	create = "/programs",
 	show = "/programs/:id",
 	update = "/programs/:id",
@@ -57,11 +58,14 @@ export default {
 //
 
 export interface Program {
+	isSubscribed?: boolean;
 	id: string
 	name: string
 	state: string
 	thumbnail: any
 	description: string
+	programSubscriptionType: "public"|"approval" //public, approval
+	subscriptionFormUrl: string|undefined
 	createdBy: CreatedBy
 	start: string
 	end: string
@@ -84,7 +88,6 @@ export interface Program {
 	end: string
     note?: string;
 	tasks: Task[]
-	isSubscribed?: boolean;
   }
   
   export interface Task {

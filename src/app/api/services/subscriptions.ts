@@ -2,14 +2,14 @@ import apiClient, {_route, type PaginationResponse} from "@/framework/api/BaseAp
 
 export enum SubscriptionsApi {
 	index = "/students/subscriptions/v2",
-	create = "/students/subscriptions", 
+	create = "/students/subscriptions/v2/create", 
 	show = "/subscriptions/:id",
 	update = "/subscriptions/:id",
 	delete = "/subscriptions/:id",
 }
 
 export interface CreateRequest{
-  levelId: string
+  // levelId: string
   programId: string
 } 
 
@@ -42,29 +42,11 @@ export interface SubscriptionSearch {
 	state: string
 	notes: string
 }
-// export interface Subscription {
-// 	id: string
-// 	program: Program
-// 	subscriber: Subscriber
-// 	level: Level
-// 	subscriptionDate: string
-// 	state: string
-// 	notes: string
-// }
 interface Subscriber {
 	name: string
 	email: string
 }
-// interface Program {
-// 	id: string
-// 	name: string
-// }
-// interface Level {
-// 	id: string
-// 	name: string 
-// }
-   
-  
+
 export interface TaskLesson {
   id: string;
   title: string;
@@ -95,6 +77,7 @@ export interface ProgramLevel {
 export interface ProgramInfo {
   id: string;
   name: string;
+  levels: ProgramLevel[];
   state: string;
   thumbnail: string;
   description: string;
@@ -106,9 +89,54 @@ export interface ProgramInfo {
 export interface Subscription {
   id: string;
   program: ProgramInfo;
-  level: ProgramLevel;
   subscriptionDate: string;
   state: string;
   notes?: string
   subscriber?: Subscriber
+}
+
+
+
+
+
+
+
+
+
+export function getCurrentOrNextLevel(subscription: Subscription): ProgramLevel | undefined {
+  if(!subscription?.program?.levels){
+    return undefined
+  }
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Find the currently active level
+  const currentLevel = subscription.program.levels.find(level => {
+    const startDate = new Date(level.start);
+    const endDate = new Date(level.end);
+    // Set endDate to the very end of its day to make the range inclusive
+    endDate.setHours(23, 59, 59, 999); 
+    
+    return today >= startDate && today <= endDate;
+  });
+
+  if (currentLevel) {
+    return currentLevel;
+  }
+
+  // If no current level, find the next upcoming one
+  const upcomingLevels = subscription.program.levels
+    .filter(level => {
+      const startDate = new Date(level.start);
+      // Check if the level starts after today
+      return startDate > today;
+    })
+    .sort((a, b) => {
+      // Sort by start date to find the soonest one
+      return new Date(a.start).getTime() - new Date(b.start).getTime();
+    });
+
+  // Return the first upcoming level, or undefined if there are no more levels
+  return upcomingLevels[0];
 }
