@@ -14,7 +14,7 @@ import {
   Calendar,
   Badge,
   Button,
-  type CalendarProps, // Ensure Button is imported
+  type CalendarProps,
 } from "antd";
 import {
   VideoCameraOutlined,
@@ -25,7 +25,7 @@ import {
   UnorderedListOutlined,
   ReadOutlined,
   BookOutlined,
-  EyeOutlined, // Icon for "View Details" button
+  EyeOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import "dayjs/locale/ar";
@@ -82,7 +82,6 @@ const getLessonTagColor = (type: TaskLesson["type"]): string => {
 }; 
  
 const handleNavigateToSubscription = (subscriptionId: string) => {
-  toast.info(`Navigating to subscription: ${subscriptionId}`);
   window.location.href = `#subscriptions/${subscriptionId}`;
 };
 
@@ -97,11 +96,11 @@ const taskContextStyle: React.CSSProperties = {
 }; 
 
 // ========================================
-// 1. Calendar View Component
+// Calendar View Component
 // ========================================
 interface CalendarTimetableViewProps {
   tasksGroupedByDate: GroupedTasksByDate;
-  initialDate?: dayjs.Dayjs; // Allow passing initial date
+  initialDate?: dayjs.Dayjs;
 }
 const CalendarTimetableView: React.FC<CalendarTimetableViewProps> = ({
   tasksGroupedByDate,
@@ -163,98 +162,6 @@ const CalendarTimetableView: React.FC<CalendarTimetableViewProps> = ({
       </ul>
     );
   };
-  // interface CellRenderInfo {
-  //   originNode: React.ReactNode;
-  //   type: 'date' | 'month';
-  //   // Add other potential properties from info if needed, e.g., today: dayjs.Dayjs
-  // }
-//   const cellRender = (current: dayjs.Dayjs, info: any) : React.ReactNode =>  {
-
-//     // Only customize date cells
-//     if (info.type === 'date') {
-//         const dateKey = current.format("YYYY-MM-DD");
-//         // Assuming tasksGroupedByDate is accessible in this scope
-//         // Replace with actual access to your grouped data
-//         const tasksGroupedByDate: GroupedTasksByDate = {}; // Replace with your actual data source
-//         const listData = tasksGroupedByDate[dateKey] || [];
-
-//         // If no tasks for this date, return the original cell content
-//         if (listData.length === 0) {
-//             return info.originNode;
-//         }
-
-//         // Prepare the custom content (task list/badges)
-//         const customContent = (
-//             <ul
-//                 className="events"
-//                 style={{
-//                     listStyle: "none",
-//                     margin: 0,
-//                     padding: '0 2px', // Ensure padding is applied
-//                     fontSize: "0.75em",
-//                     lineHeight: 1.3,
-//                     marginTop: '4px', // Add some space below the date number
-//                     textAlign: 'right', // Ensure text aligns right for RTL
-//                 }}
-//             >
-//                 {listData.slice(0, 2).map((item) => (
-//                     // Defensive check for item and item.id
-//                     item?.id ? (
-//                         <li
-//                             key={item.id}
-//                             style={{
-//                                 overflow: "hidden",
-//                                 textOverflow: "ellipsis",
-//                                 whiteSpace: "nowrap",
-//                             }}
-//                         >
-//                             <Badge
-//                                 status="processing"
-//                                 color={getLessonTagColor(item.lessons?.[0]?.type || "default")}
-//                             />
-//                             {/* Use optional chaining and default for programName */}
-//                             <span style={{ marginRight: "3px" }}>
-//                                 {(item.programName || 'برنامج').substring(0, 15)} {/* Shortened further */}
-//                             </span>
-//                         </li>
-//                     ) : null // Skip rendering if item is invalid
-//                 ))}
-//                 {listData.length > 2 && (
-//                     <li style={{ textAlign: "center" }}>
-//                         <Text type="secondary">...</Text>
-//                     </li>
-//                 )}
-//             </ul>
-//         );
-
-//         // Return the original node wrapped with your custom content
-//         // It's often best to use AntD's internal structure if possible for consistent styling
-//         return (
-//             <div className="ant-picker-cell-inner ant-picker-calendar-date"> {/* Mimic AntD structure */}
-//                  <div className="ant-picker-calendar-date-value">{current.date()}</div> {/* The date number */}
-//                  <div className="ant-picker-calendar-date-content">
-//                     {customContent} {/* Your list/badges */}
-//                  </div>
-//             </div>
-//         );
-
-//          // --- Alternative simpler structure (might need manual styling) ---
-//          /*
-//          return (
-//               <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-//                   {info.originNode} // Render default content (date number)
-//                   <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}> // Position custom content
-//                      {customContent}
-//                   </div>
-//               </div>
-//          );
-//          */
-
-//     }
-
-//     // For month cells or other types, just return the original content
-//     return info.originNode;
-// };
 
   // Date Selection Handler
   const onSelectDate = (value: dayjs.Dayjs) => {
@@ -276,7 +183,7 @@ const CalendarTimetableView: React.FC<CalendarTimetableViewProps> = ({
       }, 150);
       return () => clearTimeout(timer);
     }
-  }, [selectedDate]); // Depend on filtered tasks too
+  }, [selectedDate]);
 
   // Styles
   const calendarCardStyle: React.CSSProperties = { marginBottom: "24px" };
@@ -296,7 +203,6 @@ const CalendarTimetableView: React.FC<CalendarTimetableViewProps> = ({
     <div>
       <Card bordered={false} style={calendarCardStyle}>
         <Calendar
-          // dateCellRender={dateCellRender}
           cellRender={cellRender} 
           onSelect={onSelectDate}
           onPanelChange={onPanelChange}
@@ -337,7 +243,6 @@ const CalendarTimetableView: React.FC<CalendarTimetableViewProps> = ({
                   icon={<EyeOutlined />}
                   size="small"
                   onClick={() => handleNavigateToSubscription(task.subscriptionId)}
-                //   onClick={() => simulateNavigate(`/tasks/${task.id}`)}
                   style={{ float: "left", padding: "0 5px", fontSize: "0.85em" }}
                 >
                   عرض التفاصيل
@@ -389,7 +294,7 @@ const CalendarTimetableView: React.FC<CalendarTimetableViewProps> = ({
                 </Panel>
               </Collapse>
             )}
-            <div style={{ clear: "both" }} /> {/* Clear float */}
+            <div style={{ clear: "both" }} />
           </Card>
         ))}
       </div>
@@ -399,7 +304,7 @@ const CalendarTimetableView: React.FC<CalendarTimetableViewProps> = ({
  
 
 // ========================================
-// 4. Main Combined Page Component
+// Main Combined Page Component
 // ========================================
 const CombinedTimetablePage: React.FC = () => { 
   const {data, error, isLoading} = useQuery({queryKey: ['subscriptions'], queryFn: () => api.get({}), refetchOnWindowFocus:false}); 
@@ -413,13 +318,15 @@ const CombinedTimetablePage: React.FC = () => {
   const flatEnhancedTasks = useMemo((): EnhancedTask[] => {
     if (!data?.items || data?.items.length === 0) return [];
     return data?.items.flatMap((sub) =>
-      (sub.level?.tasks || []).map((task) => ({
-        ...task,
-        programId: sub.program.id,
-        programName: sub.program.name || "N/A",
-        levelName: sub.level.name || "N/A",
-        subscriptionId: sub?.id || "",
-      }))
+      sub.program.levels.flatMap((level) => (level?.tasks || []).map((task) => ({
+          ...task,
+          programId: sub.program.id,
+          programName: sub.program.name || "N/A",
+          levelName: level.name || "N/A",
+          subscriptionId: sub?.id || "",
+        })
+      )
+    )
     );
   }, [data?.items]);
 
@@ -477,6 +384,3 @@ const CombinedTimetablePage: React.FC = () => {
 };
 
 export default CombinedTimetablePage;
-
-// --- Example Usage (Render this component in your main App) ---
-// const App = () => <CombinedTimetablePage />;

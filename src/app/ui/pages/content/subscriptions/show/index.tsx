@@ -37,207 +37,174 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isToday from "dayjs/plugin/isToday";
 
 import {  toast } from "sonner"; // Using Sonner
+import api, { getCurrentOrNextLevel, type LevelTask, type Subscription, type TaskLesson } from "@/app/api/services/subscriptions";
+import { useQuery } from "@tanstack/react-query";
+import { useParams } from "react-router";
 
 dayjs.locale("ar");
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isToday);
-
-// --- Type Definitions ---
-interface TaskLesson {
-  id: string;
-  title: string;
-  type: string;
-  url: string;
-}
-interface LevelTask {
-  id: string;
-  levelId: string;
-  date: string;
-  note?: string;
-  lessons: TaskLesson[];
-} // date MUST be string from API
-interface ProgramLevel {
-  id: string;
-  name: string;
-  start: string;
-  end: string;
-  programId: string;
-  tasks: LevelTask[];
-}
-interface ProgramInfo {
-  id: string;
-  name: string;
-  state: string;
-  thumbnail: string;
-  description: string;
-  start: string;
-  end: string;
-  registrationStart: string;
-  registrationEnd: string;
-}
-export interface Subscription {
-  id: string;
-  program: ProgramInfo;
-  level: ProgramLevel;
-  subscriptionDate: string;
-  state: string;
-}
+ 
 
 const { Content, Sider } = Layout;
 const { Title, Text, Paragraph } = Typography;
 const { Panel } = Collapse;
  
 
-const mockSubscription: Subscription = {
-    "id":"68011f309b0cc2e8bac3e2ae",
-    "program":{
-       "id":"67fe34827d47dcd153437d8d",
-       "name":"صرح العربية",
-       "state":"published",
-       "thumbnail":"13a080b1-86b0-418a-8d0d-6a5509474c7d-Designer.png",
-       "description":"برنامج يهدف إلى رفع السوية اللغوية للطالب.\nيبدأ البرنامج تدريجيًا من الأسس البسيطة ليناسب الطالب المبتدئ تمامًا والمتوسط.",
-       "start":"2025-05-09T22:00:00.000Z",
-       "end":"2025-06-09T22:00:00.000Z",
-       "registrationStart":"2025-04-15T22:00:00.000Z",
-       "registrationEnd":"2025-05-09T22:00:00.000Z"
-    },
-    "level":{
-       "id":"67fe34b07d47dcd153437d95",
-       "name":"المستوى الأول: مدخل إلى علوم العربية",
-       "start":"2025-05-09T22:00:00.000Z",
-       "end":"2025-05-18T22:00:00.000Z",
-       "programId":"67fe34827d47dcd153437d8d",
-       "tasks":[
-          {
-             "id":"67fe364d7d47dcd153437df0",
-             "levelId":"67fe34b07d47dcd153437d95",
-             "date":"2025-05-03T22:00:00.000Z",
-             "note":"من البداية حتى الدقيقة 30",
-             "lessons":[
-                {
-                   "id":"67fe354f7d47dcd153437dac",
-                   "title":"المحاضرة الاولى - القسم الأول",
-                   "type":"video",
-                   "url":"https://youtu.be/1-RBbE3jffw?si=mxvlIWl0UtBgr-pT"
-                },
-                {
-                   "id":"67fe354f7d47dcd153437dacxx",
-                   "title":"المحاضرة 22 - القسم الأول",
-                   "type":"video",
-                   "url":"https://youtu.be/1-RBbE3jffw?si=mxvlIWl0UtBgr-pT"
-                }
-             ]
-          },
-          {
-             "id":"67fe365a7d47dcd153437df8",
-             "levelId":"67fe34b07d47dcd153437d95",
-             "date":"2025-05-04T22:00:00.000Z",
-             "lessons":[
-                {
-                   "id":"67fe35627d47dcd153437db2",
-                   "title":"المحاضرة الاولى - القسم الثاني",
-                   "type":"video",
-                   "url":"https://youtu.be/qxL-8UK6pT4?si=E9VrieJ7W9a4F04G"
-                }
-             ]
-          },
-          {
-             "id":"67fe36667d47dcd153437e01",
-             "levelId":"67fe34b07d47dcd153437d95",
-             "date":"2025-05-11T22:00:00.000Z",
-             "lessons":[
-                {
-                   "id":"67fe35787d47dcd153437db8",
-                   "title":"المحاضرة الثانية - القسم الأول",
-                   "type":"video",
-                   "url":"https://youtu.be/WshvbTd_PkM?si=DtTPYNUGxfiOEN-2"
-                }
-             ]
-          },
-          {
-             "id":"67fe36817d47dcd153437e0b",
-             "levelId":"67fe34b07d47dcd153437d95",
-             "date":"2025-05-12T22:00:00.000Z",
-             "lessons":[
-                {
-                   "id":"67fe35957d47dcd153437dbe",
-                   "title":"المحاضرة الثانية - القسم الثاني",
-                   "type":"video",
-                   "url":"https://youtu.be/uwKLuI-kvL4?si=RcbNKzd_TgCawCmF"
-                }
-             ]
-          },
-          {
-             "id":"67fe368d7d47dcd153437e16",
-             "levelId":"67fe34b07d47dcd153437d95",
-             "date":"2025-05-13T22:00:00.000Z",
-             "lessons":[
-                {
-                   "id":"67fe35c67d47dcd153437dc4",
-                   "title":"المحاضرة الثانية - القسم الثالث",
-                   "type":"video",
-                   "url":"https://youtu.be/7DyJZ_2pbRQ?si=3TBJIFWKvEVIRcpW"
-                }
-             ]
-          },
-          {
-             "id":"67fe36ad7d47dcd153437e22",
-             "levelId":"67fe34b07d47dcd153437d95",
-             "date":"2025-05-14T22:00:00.000Z",
-             "lessons":[
-                {
-                   "id":"67fe35e27d47dcd153437dca",
-                   "title":"الصرف 1",
-                   "type":"video",
-                   "url":"https://youtu.be/gWycbthEEdU?si=1INpitP3rIsXOZjw"
-                }
-             ]
-          },
-          {
-             "id":"67fe36c47d47dcd153437e2f",
-             "levelId":"67fe34b07d47dcd153437d95",
-             "date":"2025-05-16T22:00:00.000Z",
-             "lessons":[
-                {
-                   "id":"67fe35f97d47dcd153437dd0",
-                   "title":"الصرف 2",
-                   "type":"video",
-                   "url":"https://youtu.be/A3NcgzMvQ0E?si=MqKM3LM8vVZJ_89J"
-                }
-             ]
-          },
-          {
-             "id":"67fe36d17d47dcd153437e3d",
-             "levelId":"67fe34b07d47dcd153437d95",
-             "date":"2025-05-17T22:00:00.000Z",
-             "lessons":[
-                {
-                   "id":"67fe36117d47dcd153437dd6",
-                   "title":"المحاضرة الأخيرة - القسم الأول",
-                   "type":"video",
-                   "url":"https://youtu.be/F8SN770zqhs?si=ymIQMcan3ZkyULLO"
-                }
-             ]
-          },
-          {
-             "id":"67fe36e07d47dcd153437e4c",
-             "levelId":"67fe34b07d47dcd153437d95",
-             "date":"2025-05-18T22:00:00.000Z",
-             "lessons":[
-                {
-                   "id":"67fe36257d47dcd153437ddc",
-                   "title":"المحاضرة الأخيرة - القسم الثاني",
-                   "type":"video",
-                   "url":"https://youtu.be/vr1O51jWmk8?si=yvzj6c8gSnl3DQLi"
-                }
-             ]
-          }
-       ]
-    },
-    "subscriptionDate":"2025-04-16T12:48:40.005Z",
-    "state":"active"
- } as Subscription;
+// const mockSubscription: Subscription = {
+//     "id":"68011f309b0cc2e8bac3e2ae",
+//     "program":{
+//        "id":"67fe34827d47dcd153437d8d",
+//        "name":"صرح العربية",
+//        "state":"published",
+//        "thumbnail":"13a080b1-86b0-418a-8d0d-6a5509474c7d-Designer.png",
+//        "description":"برنامج يهدف إلى رفع السوية اللغوية للطالب.\nيبدأ البرنامج تدريجيًا من الأسس البسيطة ليناسب الطالب المبتدئ تمامًا والمتوسط.",
+//        "start":"2025-05-09T22:00:00.000Z",
+//        "end":"2025-06-09T22:00:00.000Z",
+//        "registrationStart":"2025-04-15T22:00:00.000Z",
+//        "registrationEnd":"2025-05-09T22:00:00.000Z",
+//        "levels": [
+//           {
+//             "id":"67fe34b07d47dcd153437d95",
+//             "name":"المستوى الأول: مدخل إلى علوم العربية",
+//             "start":"2025-05-09T22:00:00.000Z",
+//             "end":"2025-05-18T22:00:00.000Z",
+//             "programId":"67fe34827d47dcd153437d8d",
+//             "tasks":[
+//                 {
+//                   "id":"67fe364d7d47dcd153437df0",
+//                   "levelId":"67fe34b07d47dcd153437d95",
+//                   "date":"2025-05-03T22:00:00.000Z",
+//                   "note":"من البداية حتى الدقيقة 30",
+//                   "lessons":[
+//                       {
+//                         "id":"67fe354f7d47dcd153437dac",
+//                         "title":"المحاضرة الاولى - القسم الأول",
+//                         "type":"video",
+//                         "url":"https://youtu.be/1-RBbE3jffw?si=mxvlIWl0UtBgr-pT"
+//                       },
+//                       {
+//                         "id":"67fe354f7d47dcd153437dacxx",
+//                         "title":"المحاضرة 22 - القسم الأول",
+//                         "type":"video",
+//                         "url":"https://youtu.be/1-RBbE3jffw?si=mxvlIWl0UtBgr-pT"
+//                       }
+//                   ]
+//                 },
+//                 {
+//                   "id":"67fe365a7d47dcd153437df8",
+//                   "levelId":"67fe34b07d47dcd153437d95",
+//                   "date":"2025-05-04T22:00:00.000Z",
+//                   "lessons":[
+//                       {
+//                         "id":"67fe35627d47dcd153437db2",
+//                         "title":"المحاضرة الاولى - القسم الثاني",
+//                         "type":"video",
+//                         "url":"https://youtu.be/qxL-8UK6pT4?si=E9VrieJ7W9a4F04G"
+//                       }
+//                   ]
+//                 },
+//                 {
+//                   "id":"67fe36667d47dcd153437e01",
+//                   "levelId":"67fe34b07d47dcd153437d95",
+//                   "date":"2025-05-11T22:00:00.000Z",
+//                   "lessons":[
+//                       {
+//                         "id":"67fe35787d47dcd153437db8",
+//                         "title":"المحاضرة الثانية - القسم الأول",
+//                         "type":"video",
+//                         "url":"https://youtu.be/WshvbTd_PkM?si=DtTPYNUGxfiOEN-2"
+//                       }
+//                   ]
+//                 },
+//                 {
+//                   "id":"67fe36817d47dcd153437e0b",
+//                   "levelId":"67fe34b07d47dcd153437d95",
+//                   "date":"2025-05-12T22:00:00.000Z",
+//                   "lessons":[
+//                       {
+//                         "id":"67fe35957d47dcd153437dbe",
+//                         "title":"المحاضرة الثانية - القسم الثاني",
+//                         "type":"video",
+//                         "url":"https://youtu.be/uwKLuI-kvL4?si=RcbNKzd_TgCawCmF"
+//                       }
+//                   ]
+//                 },
+//                 {
+//                   "id":"67fe368d7d47dcd153437e16",
+//                   "levelId":"67fe34b07d47dcd153437d95",
+//                   "date":"2025-05-13T22:00:00.000Z",
+//                   "lessons":[
+//                       {
+//                         "id":"67fe35c67d47dcd153437dc4",
+//                         "title":"المحاضرة الثانية - القسم الثالث",
+//                         "type":"video",
+//                         "url":"https://youtu.be/7DyJZ_2pbRQ?si=3TBJIFWKvEVIRcpW"
+//                       }
+//                   ]
+//                 },
+//                 {
+//                   "id":"67fe36ad7d47dcd153437e22",
+//                   "levelId":"67fe34b07d47dcd153437d95",
+//                   "date":"2025-05-14T22:00:00.000Z",
+//                   "lessons":[
+//                       {
+//                         "id":"67fe35e27d47dcd153437dca",
+//                         "title":"الصرف 1",
+//                         "type":"video",
+//                         "url":"https://youtu.be/gWycbthEEdU?si=1INpitP3rIsXOZjw"
+//                       }
+//                   ]
+//                 },
+//                 {
+//                   "id":"67fe36c47d47dcd153437e2f",
+//                   "levelId":"67fe34b07d47dcd153437d95",
+//                   "date":"2025-05-16T22:00:00.000Z",
+//                   "lessons":[
+//                       {
+//                         "id":"67fe35f97d47dcd153437dd0",
+//                         "title":"الصرف 2",
+//                         "type":"video",
+//                         "url":"https://youtu.be/A3NcgzMvQ0E?si=MqKM3LM8vVZJ_89J"
+//                       }
+//                   ]
+//                 },
+//                 {
+//                   "id":"67fe36d17d47dcd153437e3d",
+//                   "levelId":"67fe34b07d47dcd153437d95",
+//                   "date":"2025-05-17T22:00:00.000Z",
+//                   "lessons":[
+//                       {
+//                         "id":"67fe36117d47dcd153437dd6",
+//                         "title":"المحاضرة الأخيرة - القسم الأول",
+//                         "type":"video",
+//                         "url":"https://youtu.be/F8SN770zqhs?si=ymIQMcan3ZkyULLO"
+//                       }
+//                   ]
+//                 },
+//                 {
+//                   "id":"67fe36e07d47dcd153437e4c",
+//                   "levelId":"67fe34b07d47dcd153437d95",
+//                   "date":"2025-05-18T22:00:00.000Z",
+//                   "lessons":[
+//                       {
+//                         "id":"67fe36257d47dcd153437ddc",
+//                         "title":"المحاضرة الأخيرة - القسم الثاني",
+//                         "type":"video",
+//                         "url":"https://youtu.be/vr1O51jWmk8?si=yvzj6c8gSnl3DQLi"
+//                       }
+//                   ]
+//                 }
+//             ]
+//           }
+//        ]
+//     },
+//     "subscriptionDate":"2025-04-16T12:48:40.005Z",
+//     "state":"active"
+//  } as Subscription;
+
+
 // --- Helper Functions ---
 const getLessonIcon = (type: TaskLesson["type"]): React.ReactNode => {
   switch (type) {
@@ -333,7 +300,7 @@ const simulateNavigate = (path: string) => {
 };
 
 // ========================================
-// 1. Playlist Component (With Fix)
+// Playlist Component
 // ========================================
 interface SubscriptionTaskPlaylistProps {
   levelTasks: LevelTask[];
@@ -439,7 +406,7 @@ const SubscriptionTaskPlaylist: React.FC<SubscriptionTaskPlaylistProps> = ({
         onChange={onCollapseChange}
       >
         {levelTasks.map((task, taskIndex) => {
-          // --- FIX: Defensive check for task and task.date before rendering Panel ---
+          // --- Defensive check for task and task.date before rendering Panel ---
           if (!task || !task.id) {
             console.warn("Skipping rendering of invalid task object:", task);
             return null; // Don't render anything for an invalid task
@@ -481,7 +448,7 @@ const SubscriptionTaskPlaylist: React.FC<SubscriptionTaskPlaylistProps> = ({
                 size="small"
                 dataSource={task.lessons || [] /* Ensure lessons is an array */}
                 renderItem={(lesson) => {
-                  // --- FIX: Defensive check for lesson and lesson.id ---
+                  // --- Defensive check for lesson and lesson.id ---
                   if (!lesson || !lesson.id) {
                     console.warn(
                       "Skipping rendering of invalid lesson object:",
@@ -550,7 +517,7 @@ const SubscriptionTaskPlaylist: React.FC<SubscriptionTaskPlaylistProps> = ({
 };
 
 // ========================================
-// 2. Content Viewer Component
+// Content Viewer Component
 // ========================================
 interface LessonContentViewerProps {
   lesson: TaskLesson | undefined;
@@ -558,7 +525,7 @@ interface LessonContentViewerProps {
 const LessonContentViewer: React.FC<LessonContentViewerProps> = ({
   lesson,
 }) => {
-  /* ... same code ... */
+
   const viewerContainerStyle: React.CSSProperties = {
     position: "relative",
     overflow: "hidden",
@@ -646,6 +613,8 @@ const LessonContentViewer: React.FC<LessonContentViewerProps> = ({
               style={iframeStyle}
               src={lesson.url}
               title={lesson.title}
+              allowFullScreen={true}
+               height="100%" 
             >
               <Paragraph style={{ padding: "20px" }}>
                 {" "}
@@ -731,7 +700,7 @@ const LessonContentViewer: React.FC<LessonContentViewerProps> = ({
 };
 
 // ========================================
-// 3. Actions Component
+// Actions Component
 // ========================================
 interface TaskActionsProps {
   selectedTask: LevelTask | undefined;
@@ -749,7 +718,6 @@ const TaskActions: React.FC<TaskActionsProps> = ({
   isCurrentTaskLocked,
   hasMoreContent,
 }) => {
-  /* ... same code ... */
   const actionButtonsStyle: React.CSSProperties = {
     display: "flex",
     justifyContent: "space-between",
@@ -798,7 +766,7 @@ const TaskActions: React.FC<TaskActionsProps> = ({
 };
 
 // ========================================
-// 4. Breadcrumb Component
+// Breadcrumb Component
 // ========================================
 interface SubscriptionBreadcrumbProps {
   subscription: Subscription | null;
@@ -810,6 +778,7 @@ const SubscriptionBreadcrumb: React.FC<SubscriptionBreadcrumbProps> = ({
   selectedTask,
   selectedLesson,
 }) => {
+  const lvl = getCurrentOrNextLevel(subscription!)
   /* ... same code ... */
   return (
     <Breadcrumb separator="›" style={{ marginBottom: "5px" }}>
@@ -825,7 +794,7 @@ const SubscriptionBreadcrumb: React.FC<SubscriptionBreadcrumbProps> = ({
         {" "}
         <ReadOutlined />{" "}
         <span style={{ marginRight: "4px" }}>
-          {subscription?.level?.name || "..."}
+          {lvl?.name || "..."}
         </span>{" "}
       </Breadcrumb.Item>{" "}
       {selectedTask && (
@@ -849,13 +818,9 @@ const SubscriptionBreadcrumb: React.FC<SubscriptionBreadcrumbProps> = ({
 };
 
 // ========================================
-// 5. Main Page Component
+// Main Page Component
 // ========================================
-const SubscriptionTaskViewerPageFixed: React.FC = () => {
-  // Renamed export
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+const SubscriptionTaskViewerPage: React.FC = () => {
   const [playlistVisible, setPlaylistVisible] = useState(true);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
@@ -864,37 +829,27 @@ const SubscriptionTaskViewerPageFixed: React.FC = () => {
     string | string[] | undefined
   >(undefined);
 
-  // Fetch
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-    setTimeout(() => {
-      try {
-        setSubscription(mockSubscription);
-        setLoading(false);
-      } catch (err: any) {
-        setError(err.message || "N/A");
-        setLoading(false);
-        toast.error("Err fetching subs");
-      }
-    }, 500);
-  }, []);
+	const { id } = useParams(); 
+  const {data, isLoading, error} = useQuery({queryKey: [id], queryFn: () => api.get({id:id}), refetchOnWindowFocus:false});
+  
+  const subscription = data?.items[0]
 
   // Sort tasks
+  const lvl = getCurrentOrNextLevel(subscription!)
   const sortedTasks = useMemo(() => {
-    if (!subscription?.level?.tasks) return [];
-    return [...subscription.level.tasks].sort((a, b) => {
+    if (!lvl?.tasks) return [];
+    return [...lvl.tasks].sort((a, b) => {
       try {
         return dayjs(a.date).valueOf() - dayjs(b.date).valueOf();
       } catch (e) {
         return 0;
       }
     });
-  }, [subscription]);
+  }, [lvl?.tasks  ]);
 
   // Set initial selection
   useEffect(() => {
-    if (sortedTasks.length > 0 && !selectedTaskId && !loading) {
+    if (sortedTasks.length > 0 && !selectedTaskId && !isLoading) {
       const firstUnlockedTask = sortedTasks.find(
         (task) => !isTaskLocked(task.date)
       );
@@ -906,7 +861,7 @@ const SubscriptionTaskViewerPageFixed: React.FC = () => {
         if (firstLesson) setSelectedLessonId(firstLesson.id);
       }
     }
-  }, [sortedTasks, selectedTaskId, loading]);
+  }, [sortedTasks, selectedTaskId, isLoading]);
 
   // Derive selected items
   const selectedTask = useMemo(
@@ -1051,21 +1006,21 @@ const SubscriptionTaskViewerPageFixed: React.FC = () => {
       <Layout style={mainLayoutStyle}>
         <Layout style={contentLayoutStyle}>
           <Content style={contentStyle}>
-            {loading && (
+            {isLoading && (
               <div style={{ textAlign: "center", padding: "50px" }}>
                 <Spin size="large" tip="جاري تحميل..." />
               </div>
             )}
-            {error && !loading && (
+            {error && !isLoading && (
               <Alert
                 message="خطأ في تحميل البيانات"
-                description={error}
+                description={error.message}
                 type="error"
                 showIcon
                 style={{ marginBottom: "24px" }}
               />
             )}
-            {!loading && !error && subscription && (
+            {!isLoading && !error && subscription && (
               <>
                 <div style={topBarStyle}>
                   {" "}
@@ -1096,12 +1051,12 @@ const SubscriptionTaskViewerPageFixed: React.FC = () => {
                 />
               </>
             )}
-            {!loading && !error && !subscription && (
+            {!isLoading && !error && !subscription && (
               <Empty description="لم يتم العثور على بيانات الاشتراك." />
             )}
           </Content>
         </Layout>
-        {!loading && !error && subscription && (
+        {!isLoading && !error && subscription && (
           <SubscriptionTaskPlaylist
             levelTasks={sortedTasks}
             selectedTaskId={selectedTaskId}
@@ -1117,4 +1072,4 @@ const SubscriptionTaskViewerPageFixed: React.FC = () => {
   );
 };
 
-export default SubscriptionTaskViewerPageFixed;
+export default SubscriptionTaskViewerPage;

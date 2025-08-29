@@ -1,6 +1,6 @@
 import type React from "react";
 import { useMemo } from "react";
-import api, { type EnhancedTask, type Subscription, type TaskLesson } from "@/app/api/services/subscriptions";
+import api, { getCurrentOrNextLevel, type EnhancedTask, type Subscription, type TaskLesson } from "@/app/api/services/subscriptions";
 import {
   Layout,
   Typography,
@@ -13,8 +13,8 @@ import {
   Collapse,
   Alert,
   Space,
-  Tabs, // Import Tabs
-  Button, // Ensure Button is imported
+  Tabs,
+  Button,
 } from "antd";
 import {
   CalendarOutlined,
@@ -26,9 +26,9 @@ import {
   UnorderedListOutlined,
   ReadOutlined,
   BookOutlined,
-  TeamOutlined, // Added icons for tabs
-  AppstoreOutlined, // Added icon for tabs
-  EyeOutlined, // Icon for "View Details" button
+  TeamOutlined,
+  AppstoreOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import "dayjs/locale/ar";
@@ -52,7 +52,7 @@ interface GroupedLevelTasks {
 const { Content } = Layout;
 const { Title, Text, Paragraph, Link } = Typography;
 const { Panel } = Collapse;
-const { TabPane } = Tabs; // Import TabPane
+const { TabPane } = Tabs;
  
 
 // --- Helper Functions ---
@@ -102,7 +102,7 @@ const formatDateLocale = (dateString: string): string => {
 
  
 const handleNavigateToSubscription = (subscriptionId: string) => {
-  toast.info(`Navigating to subscription: ${subscriptionId}`);
+  // toast.info(`Navigating to subscription: ${subscriptionId}`);
   window.location.href = `#subscriptions/${subscriptionId}`;
 };
 
@@ -123,7 +123,7 @@ const dateHeaderStyle: React.CSSProperties = {
  
 
 // ========================================
-// 2. Subscription-Grouped View Component
+// Subscription-Grouped View Component
 // ========================================
 interface SubscriptionTimetableViewProps {
   subscriptions: Subscription[];
@@ -142,18 +142,21 @@ const SubscriptionTimetableView: React.FC<SubscriptionTimetableViewProps> = ({
       return acc;
     }, {} as GroupedLevelTasks);
   };
+
+
  
   return (
     <div>
       {subscriptions.map((sub) => {
-        const levelTasks = sub.level?.tasks || [];
+        const lvl = getCurrentOrNextLevel(sub)
+        const levelTasks = lvl?.tasks || [];
         const groupedAndSortedTasks = useMemo(() => {
           if (levelTasks.length === 0) return [];
           const flatEnhancedTasks =   levelTasks.map<EnhancedTask>((task) => ({
                 ...task,
                 programId: sub.program.id,
                 programName: sub.program.name || "N/A",
-                levelName: sub.level.name || "N/A",
+                levelName: lvl?.name || "N/A",
                 subscriptionId: sub?.id || "",
             }))
           const sortedTasks = [...flatEnhancedTasks].sort(
@@ -162,7 +165,7 @@ const SubscriptionTimetableView: React.FC<SubscriptionTimetableViewProps> = ({
           const grouped = groupLevelTasksByDate(sortedTasks);
           const sortedDates = Object.keys(grouped);
           return sortedDates.map((date) => ({ date, tasks: grouped[date] }));
-        }, [sub, levelTasks]);
+        }, [sub, levelTasks, lvl]);
 
         return (
           <Card
@@ -194,7 +197,7 @@ const SubscriptionTimetableView: React.FC<SubscriptionTimetableViewProps> = ({
           >
             <Title level={5} style={{ marginBottom: "20px" }}>
               <ReadOutlined style={{ marginLeft: "8px" }} />{" "}
-              {sub.level?.name || "N/A"}
+              {lvl?.name || "N/A"}
             </Title>
             {levelTasks.length === 0 && (
               <Empty
@@ -227,8 +230,7 @@ const SubscriptionTimetableView: React.FC<SubscriptionTimetableViewProps> = ({
                         {!task.note && task.lessons.length === 0 && (
                           <Text type="secondary">لا توجد تفاصيل.</Text>
                         )}
-                        {/* --- Clickable Task Element --- */}
-                        {/* ----------------------------- */}
+                        
                         {task.lessons && task.lessons.length > 0 && (
                           <Collapse
                             ghost
@@ -280,7 +282,7 @@ const SubscriptionTimetableView: React.FC<SubscriptionTimetableViewProps> = ({
                             </Panel>
                           </Collapse>
                         )}
-                        <div style={{ clear: "both" }} /> {/* Clear float */}
+                        <div style={{ clear: "both" }} />
                       </Card>
                     ))}
                   </Timeline.Item>
@@ -295,10 +297,10 @@ const SubscriptionTimetableView: React.FC<SubscriptionTimetableViewProps> = ({
 };
 
 // ========================================
-// 3. Unified Timeline View Component
+// Unified Timeline View Component
 // ========================================
 interface UnifiedTimetableViewProps {
-  groupedAndSortedTasks: { date: string; tasks: EnhancedTask[] }[]; // Receive pre-processed data
+  groupedAndSortedTasks: { date: string; tasks: EnhancedTask[] }[];
 }
 const UnifiedTimetableView: React.FC<UnifiedTimetableViewProps> = ({
   groupedAndSortedTasks,
@@ -345,7 +347,6 @@ const UnifiedTimetableView: React.FC<UnifiedTimetableViewProps> = ({
                     icon={<EyeOutlined />}
                     size="small"
                       onClick={() => handleNavigateToSubscription(task.subscriptionId)}
-                    // onClick={() => simulateNavigate(`/tasks/${task.id}`)}
                     style={{
                       float: "left",
                       padding: "0 5px",
@@ -406,7 +407,7 @@ const UnifiedTimetableView: React.FC<UnifiedTimetableViewProps> = ({
                       </Panel>
                     </Collapse>
                   )}
-                  <div style={{ clear: "both" }} /> {/* Clear float */}
+                  <div style={{ clear: "both" }} />
                 </Card>
               ))}
             </Timeline.Item>
@@ -418,7 +419,7 @@ const UnifiedTimetableView: React.FC<UnifiedTimetableViewProps> = ({
 };
 
 // ========================================
-// 4. Main Combined Page Component
+// Main Combined Page Component
 // ========================================
 const CombinedTimetablePage: React.FC = () => { 
   const {data, error, isLoading} = useQuery({queryKey: ['subscriptions'], queryFn: () => api.get({}), refetchOnWindowFocus:false}); 
@@ -431,14 +432,16 @@ const CombinedTimetablePage: React.FC = () => {
   // Flatten tasks
   const flatEnhancedTasks = useMemo((): EnhancedTask[] => {
     if (!data?.items || data?.items.length === 0) return [];
-    return data?.items.flatMap((sub) =>
-      (sub.level?.tasks || []).map((task) => ({
+    return data?.items.flatMap((sub) => {
+      const lvl = getCurrentOrNextLevel(sub)
+      return (lvl?.tasks || []).map((task) => ({
         ...task,
         programId: sub.program.id,
         programName: sub.program.name || "N/A",
-        levelName: sub.level.name || "N/A",
+        levelName: lvl?.name || "N/A",
         subscriptionId: sub?.id || "",
       }))
+    }
     );
   }, [data?.items]);
 
@@ -465,7 +468,7 @@ const CombinedTimetablePage: React.FC = () => {
       date,
       tasks: tasksGroupedByDate[date].sort((a, b) =>
         a.programName.localeCompare(b.programName)
-      ), // Sort tasks within day
+      ),
     }));
   }, [tasksGroupedByDate]);
 

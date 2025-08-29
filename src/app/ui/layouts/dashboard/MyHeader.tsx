@@ -17,57 +17,55 @@ import MyAccountDropdown from '../components/my-account-dropdown';
 
 const { Header } = Layout;
 
-// Define breakpoint (you can adjust this value)
-const MOBILE_BREAKPOINT = 768; // pixels
+
+const MOBILE_BREAKPOINT = 768; 
 
 export default function MyHeader() {
     const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BREAKPOINT);
     const [drawerVisible, setDrawerVisible] = useState(false);
     const {menuList, selectedKeys, onClick} = routeToMenuHelperHook();
-    // console.log(menuList)
 
-    // --- Handle window resize ---
+    
     useEffect(() => {
         const handleResize = () => {
             setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-            // Close drawer if screen becomes larger while it's open
+            
             if (window.innerWidth >= MOBILE_BREAKPOINT && drawerVisible) {
                 setDrawerVisible(false);
             }
         };
 
         window.addEventListener('resize', handleResize);
-        // Cleanup listener on component unmount
         return () => window.removeEventListener('resize', handleResize);
-    }, [drawerVisible]); // Re-run effect if drawerVisible changes
+    }, [drawerVisible]);
 
 
-    // --- Styles ---
+    
     const headerStyle: React.CSSProperties = { 
         backgroundColor: '#f0f2f5',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '0 15px', // Adjust padding slightly for mobile
+        padding: '0 15px',
         borderBottom: '1px solid #e8e8e8',
         position: 'sticky',
         top: 0,
         zIndex: 10,
-        width: '100%', // Ensure header takes full width
+        width: '100%',
     };
 
     const logoStyle: React.CSSProperties = {
         color: '#18a978',
         fontWeight: 'bold',
         fontSize: '1.5em',
-        marginRight: '10px', // Add some space next to logo
+        marginRight: '10px', 
     };
 
     const menuStyle: React.CSSProperties = {
-        lineHeight: '64px', // Match Ant Design header height
+        lineHeight: '64px', 
         borderBottom: 'none',
         backgroundColor: 'transparent',
-        flexGrow: 1, // Allow menu to take available space if needed
+        flexGrow: 1, 
     };
  
 
@@ -82,11 +80,11 @@ export default function MyHeader() {
     return (
         <>
             <Header style={headerStyle}>
-                {/* Left Section: Logo and Menu/Hamburger */}
-                <div style={{ display: 'flex', alignItems: 'center' }}>
+                
+                <div style={{ display: 'flex', alignItems: 'center', width:'100%' }}>
                     <div style={logoStyle}>مبادراتي</div>
                     {!isMobile ? (
-                        // Desktop Menu
+                        
                         <Menu
                             theme="light"
                             mode="horizontal"
@@ -95,48 +93,45 @@ export default function MyHeader() {
                             onClick={onClick}
                             selectedKeys={selectedKeys} 
                         >
-                           {/* {menuItems} */}
                         </Menu>
                     ) : (
-                        // Mobile Hamburger Button (placed after logo)
+                        
                          <Button
                             type="text"
                             icon={<MenuOutlined />}
                             onClick={showDrawer}
-                            style={{ marginLeft: 'auto' }} // Push hamburger to the right within its container if menu is hidden
+                            style={{ marginLeft: 'auto' }}
                         />
                     )}
                 </div>
 
-                {/* Right Section: Search and Profile */}
-                <Space align="center" size="middle"> {/* Use Space for better alignment and spacing */}
+                
+                <Space align="center" size="middle"> 
                     <Input
                         prefix={<SearchOutlined />}
                         placeholder="بحث"
                         style={{
-                            width: isMobile ? 120 : 200, // Shrink search bar on mobile
+                            width: isMobile ? 120 : 200,
                              borderRadius: '20px'
                         }}
                     />
 
-                    {/* <AccountDropdown /> */}
                     <MyAccountDropdown />
                 </Space>
 
             </Header>
 
-            {/* Drawer for Mobile Menu */}
             {isMobile && (
                  <Drawer
-                    title="القائمة" // Drawer Title
-                    placement="right" // Or "left" depending on preference/RTL
+                    title="القائمة" 
+                    placement="right" 
                     closable={true}
                     onClose={closeDrawer}
                     open={drawerVisible}
-                    styles={{ body: { padding: 0 } }} // Remove body padding to have menu flush
+                    styles={{ body: { padding: 0 } }} 
                  >
                     <Menu
-                        mode="inline" // Vertical menu
+                        mode="inline" 
                         defaultSelectedKeys={['courses']} 
                         items={menuList}
                         onClick={(key) => {
@@ -145,7 +140,7 @@ export default function MyHeader() {
                         }}
                         selectedKeys={selectedKeys} 
                      >
-                         {/* {menuItems} */}
+                         
                      </Menu>
                 </Drawer>
              )}

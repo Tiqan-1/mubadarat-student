@@ -4,50 +4,42 @@ import {
     Space,
     Row,
     Col,
-    Tooltip} from 'antd';
+    Tooltip,
+    Modal,
+    Button} from 'antd';
 import {
-    ClusterOutlined, // For Levels
-    UnorderedListOutlined, // For Tasks
-    VideoCameraOutlined, // For Lessons (assuming many are videos)
-    CalendarOutlined, // For Start Date
-    CalendarFilled
+    ClusterOutlined,
+    UnorderedListOutlined,
+    VideoCameraOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ar';
 import type { Program } from '@/app/api/services/programs';
+import subscriptionsApi from "@/app/api/services/subscriptions";
+import { t } from 'i18next';
+import { type Dispatch, type SetStateAction, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 
 dayjs.locale('ar');
 
 const { Title, Text, Paragraph } = Typography;
 
 interface ProgramPageHeaderProps {
-    program: Program | null | undefined; // Allow null/undefined for loading state
+    program: Program | null | undefined;
 }
 
-// --- Helper Function for Date Formatting ---
-const formatHeaderDate = (dateString: string | undefined | null): string => {
-    if (!dateString) return "غير محدد";
-    try {
-        const d = dayjs(dateString);
-        if (!d.isValid()) return "تاريخ غير صالح";
-        // Example format: "الجمعة, ٩ مايو ٢٠٢٥"
-        return d.format('dddd, D MMMM YYYY');
-    } catch (e) {
-        return "خطأ";
-    }
-};
 
-// --- Helper Function for State Tag ---
-
-
-// --- The Header Component ---
 const ProgramPageHeader: React.FC<ProgramPageHeaderProps> = ({ program }) => {
-
-    // Handle loading/null state
     if (!program) {
         // Optional: Render a loading skeleton or null
-        return null; // Or <Skeleton active />;
+        return null;
     }
+
+    
+    const [modalOpen, setModalOpen] = useState(false);
+    const handleCardClick = () => {
+      setModalOpen(true);
+    };
 
     // Calculate overview numbers safely
     const levelCount = program.levels?.length || 0;
@@ -56,23 +48,26 @@ const ProgramPageHeader: React.FC<ProgramPageHeaderProps> = ({ program }) => {
         sum + (level.tasks?.reduce((taskSum, task) =>
             taskSum + (task.lessons?.length || 0), 0) || 0), 0) || 0;
 
-    const formattedStartDate = formatHeaderDate(program.start);
-    const formattedRegistrationEndDate = formatHeaderDate(program.registrationEnd);
 
     // Style for the container
     const programHeaderStyle: React.CSSProperties = {
         // backgroundColor: '#003d2b', // Darker Green Background
-        backgroundImage: 'linear-gradient(to right, #003d2b, #18a978)', // Optional Gradient
+        backgroundImage: 'linear-gradient(to right, #003d2b, #18a978)',
         padding: '24px 32px', // Increased padding
         borderRadius: '8px',
         color: '#fff',
         marginBottom: '24px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)', // Optional shadow
-        direction: 'rtl', // Ensure RTL direction
+        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+        direction: 'rtl',
     }; 
     return (
         <div style={programHeaderStyle}>
-
+            <SubscriptionModal program={program} open={modalOpen} setOpen={setModalOpen}  msg={
+                                    program.isSubscribed ? t('app.actions.confirm-unsubscription') : `
+                        ${t('app.actions.confirm-subscription')}
+                        ${program?.subscriptionFormUrl==null ? '': "(سيظهر لك نموذج الإشتراك بعد التأكيد)"}
+                        `
+            } />
             <Row justify="space-between" align="top" gutter={[16, 8]}>
               <Col flex="auto">
                     <Title level={2} style={{ color: '#fff', margin: '0 0 8px 0' }}>
@@ -80,9 +75,11 @@ const ProgramPageHeader: React.FC<ProgramPageHeaderProps> = ({ program }) => {
                     </Title>
               </Col>
               <Col flex="auto" style={{textAlign: 'end'}}>
-                        <Tooltip title="تاريخ إنتهاء التسجيل">
-                             <Text style={{ color: '#eee', fontSize: '0.9em' }}> <CalendarOutlined style={{ marginLeft: '5px' }} /> {formattedRegistrationEndDate} </Text>
-                        </Tooltip>
+                    <Button key="subscribe" size="large" onClick={handleCardClick} 
+                                style={{ background: '#fff', color: program.isSubscribed ? '#e50d0d':'#18a978', fontWeight: 'bold', border: 'none' }}
+                                >
+                        {program.isSubscribed ? 'إلغاء الإشتراك': 'إشترك'} 
+                    </Button>
               </Col>
             </Row>
 
@@ -108,45 +105,68 @@ const ProgramPageHeader: React.FC<ProgramPageHeaderProps> = ({ program }) => {
                         </Tooltip>
                     </Space>
               </Col>
-              <Col flex="auto" style={{textAlign: 'end'}}>
-                        <Tooltip title="تاريخ البدء">
-                             <Text style={{ color: '#eee', fontSize: '0.9em' }}> <CalendarFilled style={{ marginLeft: '5px' }} /> {formattedStartDate} </Text>
-                        </Tooltip>
-              </Col>
             </Row>
- 
+
+
         </div>
     );
 };
 
 export default ProgramPageHeader;
 
-// --- Example Usage ---
-/*
-import React from 'react';
-import ProgramPageHeader, { Program } from './ProgramPageHeader';
-
-const MyProgramScreen: React.FC = () => {
-    // Assuming 'programData' is fetched and matches the Program interface
-    const programData: Program = {
-         "id": "67fe34827d47dcd153437d8d",
-         "name": "صرح العربية",
-         "state": "published",
-         "thumbnail": "xxx",
-         "description": "برنامج يهدف إلى رفع السوية اللغوية للطالب.\nيبدأ البرنامج تدريجيًا من الأسس البسيطة ليناسب الطالب المبتدئ تمامًا والمتوسط.",
-         "start": "2025-05-09T22:00:00.000Z",
-         "end": "2025-06-09T22:00:00.000Z",
-         "createdBy": { "name": "Moaz Manager", "email": "moaz-manager@email.com" },
-         "registrationStart": "2025-04-15T22:00:00.000Z",
-         "registrationEnd": "2025-05-09T22:00:00.000Z",
-         "levels": [ { id: "level1", name: "Level 1", tasks: [ { id: "t1", lessons: [{id: 'l1'}, {id: 'l2'}] }, { id: "t2", lessons: [{id: 'l3'}] } ] }, { id: "level2", name: "Level 2", tasks: [ { id: "t3", lessons: [{id: 'l4'}, {id: 'l5'}, {id: 'l6'}] } ] } ]
-    }; // Simplified levels/tasks for brevity in example
-
-    return (
-        <div>
-            <ProgramPageHeader program={programData} />
-            {/* Rest of the program screen content * /}
-        </div>
+function SubscriptionModal({ msg, program, open, setOpen}: { msg:string, program:Program, open:boolean, setOpen: Dispatch<SetStateAction<boolean>>}) {
+    const [confirmLoading, setConfirmLoading] = useState(false);
+    const [modalText, setModalText] = useState(msg);
+    const subscriptionAction = useMutation({
+		mutationFn: () => {
+			return program.isSubscribed ? 
+            subscriptionsApi.destroy( program.id ) :  
+            subscriptionsApi.create({programId: program.id});
+		},
+		onSuccess() { 
+		},
+	})
+    
+    const handleOk = () => {
+        subscriptionAction.mutate()
+      setModalText(program.isSubscribed ? t('app.actions.unsubscription is in progress') : t('app.actions.subscription is in progress'));
+      if(!program.isSubscribed && program?.subscriptionFormUrl != null){
+            window.open(program?.subscriptionFormUrl, "_blank")
+      }
+      setConfirmLoading(true);
+      setTimeout(() => {
+        setOpen(false);
+        setConfirmLoading(false);
+      }, 2000);
+    };
+  
+    const handleCancel = () => {
+      console.log('Clicked cancel button');
+      setOpen(false);
+    };
+  
+    return ( 
+        <Modal
+          key={`modal${program.id}`}
+          title={modalText}
+          open={open}
+          onOk={handleOk}
+          footer={[
+            <Button key="back" onClick={handleCancel}>
+            {t('common.close')} 
+            </Button>,
+            <Button key="submit" 
+                danger={program.isSubscribed}
+                type="primary"
+                loading={subscriptionAction.isPending} 
+                onClick={handleOk}>
+            {t('common.confirm')} 
+            </Button>
+          ]}
+          confirmLoading={confirmLoading}
+          onCancel={handleCancel}
+        >
+          <p>{program.name}</p>
+        </Modal> 
     );
-};
-*/
+  };

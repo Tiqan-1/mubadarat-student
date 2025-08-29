@@ -7,9 +7,9 @@ import {
   Tabs 
 } from 'antd';
 import {  
-  InfoCircleOutlined, // Generic info/overview
-  QuestionCircleOutlined, // Q&A
-  EditOutlined, // Assignments
+  InfoCircleOutlined,
+  QuestionCircleOutlined,
+  EditOutlined,
 } from '@ant-design/icons';
  
 import SubjectHeader from './subject-header';
