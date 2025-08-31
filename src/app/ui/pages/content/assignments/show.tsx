@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 import assignmentsApi from "@/app/api/services/assignments";
 import { useNavigate, useParams } from "react-router";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {CustomFormRenderer} from 'dynamic-form-renderer';
 // import {i18n} from 'dynamic-form-renderer';
 import 'dynamic-form-renderer/style.css';
@@ -39,7 +39,7 @@ export default function AssignmentPage() {
 
     // Mutation to submit answers
     const mutationSubmit = useMutation({
-        retry: false,
+        // retry: false,
         mutationFn: (values: Record<string, number>) => 
             assignmentsApi.submitAnswers(assignmentId!, values),
         onSuccess: () => {
@@ -49,12 +49,17 @@ export default function AssignmentPage() {
         onError: (_error: any) => {}
     });
 
-    const onStart = () => {
+    const onStart = useCallback(() => {
+        console.log(mutationStart.status)
+        if (!mutationStart.isIdle) return; 
         mutationStart.mutate();
-    };
-    const onFinish = (answers: { [key: string]: any }) => {
+    }, [mutationStart]);
+
+    const onFinish = useCallback((answers: { [key: string]: any }) => {
+        // Prevent re-submission while one is already in progress
+        if (!mutationSubmit.isIdle) return; 
         mutationSubmit.mutate(answers);
-    };
+    }, [mutationSubmit]);
 
     // --- RENDER LOGIC ---
     if (isLoadingAssignment || mutationStart.isPending) {
@@ -78,6 +83,7 @@ export default function AssignmentPage() {
                 durationInMinutes={assignmentData.durationInMinutes}
                 language={'ar'}
                 // showCorrection={true}
+                // isSubmitting={mutationSubmit.isPending} 
             />
         </Space>
     );
