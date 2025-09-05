@@ -80,7 +80,7 @@ export default function ProgramPage() {
                     مرحبا بك في منصة المبادرات التعليمية
                 </Title>
                 <Paragraph style={{ fontSize: '1.1em', color: '#333' }}>
-                    يمكننا كتابة نص تعريفي للمنصة أو وضع إعلانات للدورات القادمة و الجديدة
+                    منصة تعليمية دينية تسعى لنشر العلم الشرعي وتعزيز القيم الإيمانية بأسلوبٍ ميسر وتفاعلي.
                 </Paragraph>
             </div>
 
@@ -108,10 +108,10 @@ export default function ProgramPage() {
                                         <Title level={5} style={{ marginBottom: '8px' }}>
                                             {program.name}
                                         </Title>
-                                        <Space align="center" style={{ marginBottom: '8px', fontSize: '0.9em' }}>
+                                        {/* <Space align="center" style={{ marginBottom: '8px', fontSize: '0.9em' }}>
                                             <ReadOutlined style={{ color: '#888' }} />
                                             <Text type="secondary">{program.studentCount ?? 0} طالبا</Text>
-                                        </Space>
+                                        </Space> */}
                                         <Paragraph ellipsis={{ rows: 3 }} type="secondary" style={{ fontSize: '0.9em' }}>
                                             {program.description}
                                         </Paragraph>

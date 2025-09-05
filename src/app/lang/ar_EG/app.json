@@ -59,6 +59,7 @@
     "programs": {
       "grid-header": "قائمة البرامج",
       "title": "البرامج",
+      "open-title": "البرامج المفتوحة",
       "types": {
         "public": "مفتوح",
         "approval": "يحتاج موافقة"

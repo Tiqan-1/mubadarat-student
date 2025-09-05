@@ -6,7 +6,7 @@ const routes : Permission[] = [
 	{
 		id: "main",
 		parentId: "",
-		label: "app.programs.title",
+		label: "app.programs.open-title",
 		name: "Programs",
 		icon: "ant-design:read-outlined",
 		type: PermissionType.MENU,

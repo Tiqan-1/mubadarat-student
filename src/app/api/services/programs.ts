@@ -103,26 +103,3 @@ export interface Program {
 	type: string
 	url: string
   }
-  
-
-  
-// // --- Interfaces matching the JSON structure ---
-// // (Assuming TaskLesson, LevelTask, CreatedBy are defined elsewhere or inline if needed)
-// interface TaskLesson { id: string; title: string; type: string; url: string; }
-// interface LevelTask { id: string; levelId: string; date: string; note?: string; lessons: TaskLesson[]; }
-// interface CreatedBy { name?: string; email?: string; } // Made optional for safety
-// interface ProgramLevel { id: string; name: string; start: string; end: string; programId: string; createdBy?: CreatedBy; tasks?: LevelTask[]; }
-
-// export interface Program { // Exporting interface for potential use elsewhere
-//     id: string;
-//     name: string;
-//     state: string;
-//     thumbnail?: string; // Optional
-//     description?: string; // Optional
-//     start: string;
-//     end: string;
-//     createdBy?: CreatedBy; // Optional
-//     registrationStart?: string; // Optional
-//     registrationEnd?: string; // Optional
-//     levels?: ProgramLevel[]; // Optional
-// }

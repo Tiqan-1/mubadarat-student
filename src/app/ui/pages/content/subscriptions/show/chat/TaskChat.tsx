@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import type React from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Layout, List, Input, Button, Spin, Empty, Avatar, Tooltip, Alert, Typography } from 'antd';
 import { RightOutlined, SendOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -40,7 +41,7 @@ export const TaskChat: React.FC<TaskChatProps> = ({ chatRoomId, visible, onClose
     queryKey: chatQueryKey(chatRoomId),
     queryFn: () => chatApi.join(chatRoomId),
     enabled: !!chatRoomId && visible,
-    staleTime: Infinity,
+    staleTime: Number.POSITIVE_INFINITY,
   });
 
   const messages = chatData?.messages ?? [];
@@ -96,7 +97,7 @@ export const TaskChat: React.FC<TaskChatProps> = ({ chatRoomId, visible, onClose
       channel.unbind('message', handleNewMessage);
       pusherClient.unsubscribe(`${chatRoomId}`);
     };
-  }, [chatRoomId, queryClient, visible]);
+  }, [chatRoomId, queryClient]);
 
   const { mutate: sendMessage, isPending: isSending } = useMutation({
     mutationFn: (text: string) => {

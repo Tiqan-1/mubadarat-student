@@ -58,6 +58,7 @@ export interface LevelTask {
   levelId: string;
   date: string;
   note?: string;
+  chatRoomId?: string;
   lessons: TaskLesson[];
 }
 export interface EnhancedTask extends LevelTask {
