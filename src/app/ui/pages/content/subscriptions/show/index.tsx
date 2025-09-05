@@ -23,6 +23,7 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isToday from "dayjs/plugin/isToday";
 
 import {  toast } from "sonner";
+import Joyride from 'react-joyride-react19-compat';
 import api, { getCurrentOrNextLevel, type LevelTask, type TaskLesson } from "@/app/api/services/subscriptions";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
@@ -31,6 +32,7 @@ import { formatDateLocale, isTaskLocked, SubscriptionTaskPlaylist } from "./Subs
 import { SubscriptionBreadcrumb } from "./SubscriptionBreadcrumb";
 import { TaskChat } from "./chat/TaskChat";
 import { useSubscriptionState } from "../hooks/useSubscriptionState";
+import { usePlayerTour } from "./hooks/usePlayerTour";
 
 dayjs.locale("ar");
 dayjs.extend(isSameOrBefore);
@@ -144,7 +146,7 @@ const TaskActions: React.FC<TaskActionsProps> = ({
 // Main Page Component
 // ========================================
 const SubscriptionTaskViewerPage: React.FC = () => {
-  
+
   const [selectedLevelId, setSelectedLevelId] = useState<string | null>(null);
   const [playlistVisible, setPlaylistVisible] = useState(false);
   const [isChatVisible, setIsChatVisible] = useState(false);
@@ -234,6 +236,14 @@ const SubscriptionTaskViewerPage: React.FC = () => {
     if (findNextUnlockedTask(sortedTasks, selectedTaskId)) return true;
     return false;
   }, [selectedTask,selectedLessonId,sortedTasks,selectedTaskId,isCurrentTaskLocked]);
+  
+
+  const { joyrideProps } = usePlayerTour({
+    isDataLoaded: !!subscription,
+    selectedTask,
+    setIsChatVisible,
+    setPlaylistVisible,
+  });
 
   // Handlers
   const togglePlaylist = () => setPlaylistVisible(!playlistVisible);
@@ -255,15 +265,6 @@ const SubscriptionTaskViewerPage: React.FC = () => {
   const handleCollapseChange = (key: string | string[]) => {
     const newActiveKey = typeof key === "string" ? key : Array.isArray(key) ? key[0] : undefined;
     setActiveCollapseKey(newActiveKey);
-    // if (newActiveKey) {
-    //   const task = sortedTasks.find((t) => t?.id === newActiveKey);
-    //   if (task && !isTaskLocked(task.date)) {
-    //     if (selectedTaskId !== newActiveKey) {
-    //       setSelectedTaskId(newActiveKey);
-    //       setSelectedLessonId(task.lessons?.[0]?.id || null);
-    //     }
-    //   }
-    // }
   };
 
   const showCompletionModal = () => {
@@ -346,9 +347,16 @@ const SubscriptionTaskViewerPage: React.FC = () => {
 
   return (
     <Layout style={mainLayoutStyle}>
+      
+      <Joyride {...joyrideProps} />
+      {/* <Joyride steps={tourSteps} run={runTour} callback={handleJoyrideCallback} continuous showProgress showSkipButton locale={{ back: 'السابق', close: 'إغلاق', last: 'إنهاء', next: 'التالي', skip: 'تخطي', nextLabelWithProgress: ("التالي ({step}/{steps})") ,}} styles={{ options: { zIndex: 10000, arrowColor: '#333', backgroundColor: '#333', primaryColor: '#1677ff', textColor: '#fff', }, }} /> */}
+      
       {selectedTask?.chatRoomId && (
-        <TaskChat chatRoomId={selectedTask.chatRoomId} onClose={toggleChat} visible={isChatVisible} />
+        <div className="tour-step-chat">
+          <TaskChat chatRoomId={selectedTask.chatRoomId} onClose={toggleChat} visible={isChatVisible} />
+        </div>
       )}
+      
       <Layout>
         <Content style={contentStyle}>
           {isLoading && <div style={{ textAlign: "center", padding: "50px" }}><Spin size="large" tip="جاري تحميل..." /></div>}
@@ -368,36 +376,44 @@ const SubscriptionTaskViewerPage: React.FC = () => {
                   )}
                 </Space>
               </div>
-              <LessonContentViewer lesson={selectedLesson} />
-              <TaskActions
-                selectedTask={selectedTask}
-                selectedLesson={selectedLesson}
-                onMarkComplete={handleMarkComplete}
-                isLoadingComplete={isLoadingComplete}
-                isCurrentTaskLocked={isCurrentTaskLocked}
-                hasMoreContent={hasMoreContent}
-              />
+              <div className="tour-step-content">
+                  <LessonContentViewer lesson={selectedLesson} />
+              </div>
+              <div className="tour-step-actions">
+                <TaskActions
+                  selectedTask={selectedTask}
+                  selectedLesson={selectedLesson}
+                  onMarkComplete={handleMarkComplete}
+                  isLoadingComplete={isLoadingComplete}
+                  isCurrentTaskLocked={isCurrentTaskLocked}
+                  hasMoreContent={hasMoreContent}
+                />
+              </div>
             </>
           )}
           {!isLoading && !error && !subscription && <Empty description="لم يتم العثور على بيانات الاشتراك." />}
         </Content>
       </Layout>
+
       {!isLoading && !error && subscription && (
-        <SubscriptionTaskPlaylist
-          allLevels={subscription.program.levels || []}
-          selectedLevelId={selectedLevelId}
-          onLevelChange={handleLevelChange}
-          levelTasks={sortedTasks}
-          selectedTaskId={selectedTaskId}
-          selectedLessonId={selectedLessonId}
-          completedLessons={completedLessons}
-          visible={playlistVisible}
-          activeCollapseKey={activeCollapseKey}
-          onLessonClick={handleLessonClick}
-          onCollapseChange={handleCollapseChange}
-          onClose={togglePlaylist}
-        />
+        <div className="tour-step-playlist">
+          <SubscriptionTaskPlaylist
+            allLevels={subscription.program.levels || []}
+            selectedLevelId={selectedLevelId}
+            onLevelChange={handleLevelChange}
+            levelTasks={sortedTasks}
+            selectedTaskId={selectedTaskId}
+            selectedLessonId={selectedLessonId}
+            completedLessons={completedLessons}
+            visible={playlistVisible}
+            activeCollapseKey={activeCollapseKey}
+            onLessonClick={handleLessonClick}
+            onCollapseChange={handleCollapseChange}
+            onClose={togglePlaylist}
+          />
+        </div>
       )}
+
     </Layout>
   );
 };

@@ -58,7 +58,8 @@ export default {
 //
 
 export interface Program {
-	isSubscribed?: boolean;
+	// isSubscribed?: boolean;
+	subscriptionId?: string
 	id: string
 	name: string
 	state: string

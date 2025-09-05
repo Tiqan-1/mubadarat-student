@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import ProgramPageHeader from './program-header';
 import { useParams } from 'react-router';
 import api from "@/app/api/services/programs";
-import subscriptionsApi from "@/app/api/services/subscriptions";
 import LevelItemCard from './level-item-card';
 import { t } from 'i18next';
 import dayjs from 'dayjs';
@@ -28,13 +27,13 @@ const formatHeaderDate = (dateString: string | undefined | null): string => {
 const CourseProgramPage = () => { 
 	const { id } = useParams(); 
     const {data:programsList} = useQuery({queryKey: ['programs', id], queryFn: () => api.getOpen({id:id}), refetchOnWindowFocus:false});
-    const {data:subscriptionsList} = useQuery({queryKey: ['subscriptions', id], queryFn: () => subscriptionsApi.get({programId:id}), refetchOnWindowFocus:false});
+    // const {data:subscriptionsList} = useQuery({queryKey: ['subscriptions', id], queryFn: () => subscriptionsApi.get({programId:id}), refetchOnWindowFocus:false});
     const program = programsList?.items.find((value) => value.id === id)
     
-    const subscriptions = subscriptionsList?.items ?? []; 
-    if(subscriptions.length > 0 && program!==undefined){
-      program.isSubscribed = (subscriptions.filter((value) => value.program.id === program.id).length ?? 0) > 0;
-    }
+    // const subscriptions = subscriptionsList?.items ?? []; 
+    // if(subscriptions.length > 0 && program!==undefined){
+    //   program.isSubscribed = (subscriptions.filter((value) => value.program.id === program.id).length ?? 0) > 0;
+    // }
     
     const dates = [
       { title: 'بدء التسجيل', date: formatHeaderDate(program?.registrationStart) },

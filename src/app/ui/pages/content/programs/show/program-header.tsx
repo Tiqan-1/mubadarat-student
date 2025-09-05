@@ -9,6 +9,7 @@ import {
     Button} from 'antd';
 import {
     ClusterOutlined,
+    PlayCircleOutlined,
     UnorderedListOutlined,
     VideoCameraOutlined,
 } from '@ant-design/icons';
@@ -19,6 +20,8 @@ import subscriptionsApi from "@/app/api/services/subscriptions";
 import { t } from 'i18next';
 import { type Dispatch, type SetStateAction, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { useNavigate } from 'react-router';
+import styles from '@/app/ui/components/ShineButton.module.css';
 
 dayjs.locale('ar');
 
@@ -34,6 +37,11 @@ const ProgramPageHeader: React.FC<ProgramPageHeaderProps> = ({ program }) => {
         // Optional: Render a loading skeleton or null
         return null;
     }
+
+    const navigate = useNavigate();
+    const navigateToCourses = () => {
+      navigate(`/subscriptions/${program.subscriptionId}`);
+    };
 
     
     const [modalOpen, setModalOpen] = useState(false);
@@ -63,7 +71,7 @@ const ProgramPageHeader: React.FC<ProgramPageHeaderProps> = ({ program }) => {
     return (
         <div style={programHeaderStyle}>
             <SubscriptionModal program={program} open={modalOpen} setOpen={setModalOpen}  msg={
-                                    program.isSubscribed ? t('app.actions.confirm-unsubscription') : `
+                                    program.subscriptionId ? t('app.actions.confirm-unsubscription') : `
                         ${t('app.actions.confirm-subscription')}
                         ${program?.subscriptionFormUrl==null ? '': "(سيظهر لك نموذج الإشتراك بعد التأكيد)"}
                         `
@@ -75,10 +83,10 @@ const ProgramPageHeader: React.FC<ProgramPageHeaderProps> = ({ program }) => {
                     </Title>
               </Col>
               <Col flex="auto" style={{textAlign: 'end'}}>
-                    <Button key="subscribe" size="large" onClick={handleCardClick} 
-                                style={{ background: '#fff', color: program.isSubscribed ? '#e50d0d':'#18a978', fontWeight: 'bold', border: 'none' }}
+                    <Button key="subscribe" onClick={handleCardClick} 
+                                style={{ background: '#fff', color: program.subscriptionId ? '#e50d0d':'#18a978', fontWeight: 'bold', border: 'none' }}
                                 >
-                        {program.isSubscribed ? 'إلغاء الإشتراك': 'إشترك'} 
+                        {program.subscriptionId ? 'إلغاء الإشتراك': 'إشترك'} 
                     </Button>
               </Col>
             </Row>
@@ -105,6 +113,17 @@ const ProgramPageHeader: React.FC<ProgramPageHeaderProps> = ({ program }) => {
                         </Tooltip>
                     </Space>
               </Col>
+              {
+                program.subscriptionId && 
+                <Col flex="auto" style={{textAlign: 'end'}}>
+                      <Button 
+                      className={styles.shineButton}
+                      onClick={navigateToCourses}  icon={<PlayCircleOutlined />} style={{ background: '#fff', color: '#18a978', fontWeight: 'bold', border: 'none' }}>
+                            مواصلة الدراسة
+                      </Button>
+                </Col>
+              }
+
             </Row>
 
 
@@ -119,7 +138,7 @@ function SubscriptionModal({ msg, program, open, setOpen}: { msg:string, program
     const [modalText, setModalText] = useState(msg);
     const subscriptionAction = useMutation({
 		mutationFn: () => {
-			return program.isSubscribed ? 
+			return program.subscriptionId ? 
             subscriptionsApi.destroy( program.id ) :  
             subscriptionsApi.create({programId: program.id});
 		},
@@ -129,8 +148,8 @@ function SubscriptionModal({ msg, program, open, setOpen}: { msg:string, program
     
     const handleOk = () => {
         subscriptionAction.mutate()
-      setModalText(program.isSubscribed ? t('app.actions.unsubscription is in progress') : t('app.actions.subscription is in progress'));
-      if(!program.isSubscribed && program?.subscriptionFormUrl != null){
+      setModalText(program.subscriptionId ? t('app.actions.unsubscription is in progress') : t('app.actions.subscription is in progress'));
+      if(!program.subscriptionId && program?.subscriptionFormUrl != null){
             window.open(program?.subscriptionFormUrl, "_blank")
       }
       setConfirmLoading(true);
@@ -156,7 +175,7 @@ function SubscriptionModal({ msg, program, open, setOpen}: { msg:string, program
             {t('common.close')} 
             </Button>,
             <Button key="submit" 
-                danger={program.isSubscribed}
+                danger={program.subscriptionId !== undefined}
                 type="primary"
                 loading={subscriptionAction.isPending} 
                 onClick={handleOk}>

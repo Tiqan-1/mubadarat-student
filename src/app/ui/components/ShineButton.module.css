@@ -1,0 +1,30 @@
+/* src/app/components/player/ShineButton.module.css */
+
+/* Note: We no longer use @keyframes because we can animate box-shadow directly */
+
+.shineButton {
+  border-radius: 6px;
+  position: relative;
+  /* Apply the animation here. The comma separates two independent shadow animations */
+  animation: doublePulse 2s infinite ease-out;
+}
+
+@keyframes doublePulse {
+  0% {
+    box-shadow: 
+    /*   0 0 0 0 rgba(22, 119, 255, 0.7), Inner pulse */
+    /*   0 0 0 0 rgba(22, 119, 255, 0.5); Outer pulse */
+      0 0 0 0 rgba(233, 233, 233, 0.7), /* Inner pulse */
+      0 0 0 0 rgba(255, 255, 255, 0.5); /* Outer pulse */
+  }
+  50% {
+    box-shadow: 
+      0 0 0 10px rgba(22, 119, 255, 0),
+      0 0 0 20px rgba(22, 119, 255, 0);
+  }
+  100% {
+    box-shadow: 
+      0 0 0 20px rgba(22, 119, 255, 0),
+      0 0 0 30px rgba(22, 119, 255, 0);
+  }
+}
