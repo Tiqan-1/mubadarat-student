@@ -14,6 +14,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@fontsource-variable/readex-pro": "^5.2.5",
     "@fontsource-variable/rubik": "^5.2.5",
+    "@tailwindcss/vite": "^4.1.12",
     "@tanstack/react-query": "^5.67.3",
     "@types/autosuggest-highlight": "^3.2.3",
     "@types/nprogress": "^0.2.3",
@@ -28,6 +29,7 @@
     "i18next-browser-languagedetector": "^8.0.4",
     "motion": "^12.5.0",
     "nprogress": "^0.2.0",
+    "pusher-js": "^8.4.0",
     "ramda": "^0.30.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -41,7 +43,6 @@
     "styled-components": "^6.1.16",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.12",
-    "@tailwindcss/vite": "^4.1.12",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
@@ -50,6 +51,7 @@
     "@faker-js/faker": "^9.6.0",
     "@iconify/react": "^5.2.0",
     "@tanstack/eslint-plugin-query": "^5.67.2",
+    "@types/pusher-js": "^4.2.2",
     "@types/ramda": "^0.30.2",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",

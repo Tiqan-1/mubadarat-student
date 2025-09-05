@@ -1,0 +1,107 @@
+/* This is our new flexbox parent container */
+.siderLayout {
+  display: flex;
+  flex-direction: column;
+  height: 90%;
+}
+
+/* This is the message list container */
+.chatContentContainer {
+  flex: 1; /* This makes the container grow to fill available space */
+  overflow-y: auto; /* Adds a scrollbar ONLY if messages overflow */
+  padding: 16px;
+  background-color: #f5f5f5;
+}
+
+/* This is the text input area at the bottom */
+.chatInputArea {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background-color: #fff;
+  border-top: 1px solid #f0f0f0;
+  flex-shrink: 0; /* Prevents this area from shrinking */
+}
+
+.chatInputArea textarea {
+  flex: 1;
+}
+
+.messageList {
+  display: flex;
+  flex-direction: column;
+}
+
+.messageItem {
+  border-bottom: none !important;
+  padding: 8px 0 !important;
+}
+
+.messageWrapper {
+  display: flex;
+  align-items: flex-start;
+  max-width: 85%;
+}
+
+.avatar {
+  margin-left: 8px;
+}
+
+.messageContent {
+  display: flex;
+  flex-direction: column;
+}
+
+.senderName {
+  font-size: 0.75rem;
+  color: #8c8c8c;
+  margin-bottom: 2px;
+  padding-right: 8px;
+}
+
+.messageBubble {
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.messageText {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.messageTimestamp {
+  font-size: 0.7rem;
+  color: #bfbfbf;
+  margin-top: 4px;
+}
+
+/* --- Alignment and Styling for Sender/Receiver --- */
+.theirMessageContainer {
+  justify-content: flex-start;
+}
+.theirMessageContainer .messageBubble {
+  background-color: #ffffff;
+}
+.theirMessageContainer .messageTimestamp {
+  align-self: flex-start;
+}
+
+.myMessageContainer {
+  justify-content: flex-end;
+}
+.myMessageContainer .messageBubble {
+  background-color: #1677ff;
+  color: white;
+}
+.myMessageContainer .messageTimestamp {
+  align-self: flex-end;
+}
+
+.centered {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
