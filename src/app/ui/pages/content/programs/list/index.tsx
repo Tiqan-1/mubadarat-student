@@ -5,12 +5,8 @@ import {
     Row,
     Col,
     Card,
-    Button,
-    Space, 
-} from 'antd';
-import {
-    ReadOutlined, // Using ReadOutlined as a placeholder for the graduation cap
-} from '@ant-design/icons'; 
+    Button, 
+} from 'antd'; 
 
  
 import { useQuery } from "@tanstack/react-query";
@@ -18,7 +14,7 @@ import api from "@/app/api/services/programs";
 import { useNavigate } from 'react-router';
  
 const { Content } = Layout;
-const { Title, Paragraph, Text } = Typography;
+const { Title, Paragraph } = Typography;
  
    
 export default function ProgramPage() { 

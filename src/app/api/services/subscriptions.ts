@@ -5,7 +5,7 @@ export enum SubscriptionsApi {
 	create = "/students/subscriptions/v2/create", 
 	show = "/subscriptions/:id",
 	update = "/subscriptions/:id",
-	delete = "/subscriptions/:id",
+	delete = "/students/subscriptions/:id",
 }
 
 export interface CreateRequest{
@@ -53,6 +53,12 @@ export interface TaskLesson {
   type: string;
   url: string;
 }
+export interface TaskAssignment {
+  id: string;
+  title: string;
+  type: string; // 'exam' | 'homework'
+  availableUntil: string; // date
+}
 export interface LevelTask {
   id: string;
   levelId: string;
@@ -60,6 +66,7 @@ export interface LevelTask {
   note?: string;
   chatRoomId?: string;
   lessons: TaskLesson[];
+  assignment?: TaskAssignment;
 }
 export interface EnhancedTask extends LevelTask {
   programId: string;

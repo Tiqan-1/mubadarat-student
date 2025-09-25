@@ -139,10 +139,11 @@ function SubscriptionModal({ msg, program, open, setOpen}: { msg:string, program
     const subscriptionAction = useMutation({
 		mutationFn: () => {
 			return program.subscriptionId ? 
-            subscriptionsApi.destroy( program.id ) :  
+            subscriptionsApi.destroy( program.subscriptionId ) :  
             subscriptionsApi.create({programId: program.id});
 		},
-		onSuccess() { 
+		onSuccess() {
+      window.location.reload();
 		},
 	})
     
