@@ -51,7 +51,7 @@ export function useSubscriptionState() {
     setCompletion(prev => {
       const currentCompleted = prev[subscriptionId] || [];
       if (currentCompleted.includes(itemId)) {
-        return prev; // No change needed
+        return prev;
       }
       return {
         ...prev,
