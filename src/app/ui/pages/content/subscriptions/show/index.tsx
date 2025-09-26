@@ -24,11 +24,11 @@ import isToday from "dayjs/plugin/isToday";
 
 import {  toast } from "sonner";
 import Joyride from 'react-joyride-react19-compat';
-import api, { getCurrentOrNextLevel, type LevelTask, type TaskLesson } from "@/app/api/services/subscriptions";
+import api, { getCurrentOrNextLevel, getTaskItems, type PlaylistItem, type LevelTask } from "@/app/api/services/subscriptions";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
 import { LessonContentViewer } from "./LessonContentViewer";
-import { formatDateLocale, isTaskLocked, SubscriptionTaskPlaylist } from "./SubscriptionTaskPlaylist";
+import { isTaskLocked, SubscriptionTaskPlaylist } from "./SubscriptionTaskPlaylist";
 import { SubscriptionBreadcrumb } from "./SubscriptionBreadcrumb";
 import { TaskChat } from "./chat/TaskChat";
 import { useSubscriptionState } from "../hooks/useSubscriptionState";
@@ -43,30 +43,37 @@ dayjs.extend(isToday);
 const { Content } = Layout;
  
 // --- Helper Functions ---
-const findNextLessonInTask = (
-  task: LevelTask | undefined,
-  currentLessonId: string | null
-): TaskLesson | null => {
-  if (!task || !currentLessonId || !task.lessons || task.lessons.length < 2)
-    return null;
-  const currentIndex = task.lessons.findIndex((l) => l.id === currentLessonId);
-  if (currentIndex === -1 || currentIndex >= task.lessons.length - 1)
-    return null;
-  return task.lessons[currentIndex + 1];
-};
-const findNextUnlockedTask = (
+const findNextPlaylistItem = (
   sortedTasks: LevelTask[],
-  currentTaskId: string | null
-): LevelTask | null => {
-  if (!currentTaskId)
-    return sortedTasks.find((t) => !isTaskLocked(t.date)) || null;
-  const currentIndex = sortedTasks.findIndex((t) => t.id === currentTaskId);
-  if (currentIndex === -1) return null;
-  for (let i = currentIndex + 1; i < sortedTasks.length; i++) {
-    if (!isTaskLocked(sortedTasks[i].date)) {
-      return sortedTasks[i];
+  currentTaskId: string | null,
+  currentItemId: string | null,
+): { nextItemId: string; nextTaskId: string } | null => {
+  if (!currentTaskId || !currentItemId) return null;
+
+  const currentTaskIndex = sortedTasks.findIndex((t) => t.id === currentTaskId);
+  if (currentTaskIndex === -1) return null;
+  
+  const currentTask = sortedTasks[currentTaskIndex];
+  const currentTaskItems = getTaskItems(currentTask);
+  const currentItemIndex = currentTaskItems.findIndex((i) => i.id === currentItemId);
+
+  // Look for the next item in the SAME task
+  if (currentItemIndex > -1 && currentItemIndex < currentTaskItems.length - 1) {
+    const nextItem = currentTaskItems[currentItemIndex + 1];
+    return { nextItemId: nextItem.id, nextTaskId: currentTask.id };
+  }
+
+  // Look for the first item in the NEXT unlocked task
+  for (let i = currentTaskIndex + 1; i < sortedTasks.length; i++) {
+    const nextTask = sortedTasks[i];
+    if (!isTaskLocked(nextTask.date)) {
+      const nextTaskItems = getTaskItems(nextTask);
+      if (nextTaskItems.length > 0) {
+        return { nextItemId: nextTaskItems[0].id, nextTaskId: nextTask.id };
+      }
     }
   }
+
   return null;
 };
 const simulateNavigate = (path: string) => {
@@ -80,7 +87,7 @@ const simulateNavigate = (path: string) => {
 // ========================================
 interface TaskActionsProps {
   selectedTask: LevelTask | undefined;
-  selectedLesson: TaskLesson | undefined;
+  selectedItem: PlaylistItem | undefined;
   onMarkComplete: () => void;
   isLoadingComplete: boolean;
   isCurrentTaskLocked: boolean;
@@ -88,7 +95,7 @@ interface TaskActionsProps {
 }
 const TaskActions: React.FC<TaskActionsProps> = ({
   selectedTask,
-  selectedLesson,
+  selectedItem,
   onMarkComplete,
   isLoadingComplete,
   isCurrentTaskLocked,
@@ -103,25 +110,26 @@ const TaskActions: React.FC<TaskActionsProps> = ({
     borderTop: "1px solid #f0f0f0",
     marginTop: "auto",
   };
-  const downloadUrl = selectedLesson?.url;
   return (
     <div style={actionButtonsStyle}>
       
-      <Space wrap>
+      { selectedItem?.itemType==='lesson' && (
+        <Space wrap>
         
         <Button
           icon={<DownloadOutlined />}
-          href={downloadUrl}
+          href={selectedItem?.url}
           target="_blank"
           download
-          disabled={!downloadUrl || isCurrentTaskLocked}
+          disabled={!selectedItem?.url || isCurrentTaskLocked}
         >
           
           تحميل المرفق
         </Button>
       </Space>
+      )}
+
       <Tooltip title={isCurrentTaskLocked ? "لا يمكنك إكمال مهمة مقفلة" : ""}>
-        
         <Button
           type="primary"
           icon={<CheckCircleOutlined />}
@@ -151,19 +159,18 @@ const SubscriptionTaskViewerPage: React.FC = () => {
   const [playlistVisible, setPlaylistVisible] = useState(false);
   const [isChatVisible, setIsChatVisible] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [isLoadingComplete, setIsLoadingComplete] = useState(false);
   const [activeCollapseKey, setActiveCollapseKey] = useState<string | string[] | undefined>(undefined);
 
 	const { id } = useParams(); 
   const {data, isLoading, error} = useQuery({queryKey: [id], queryFn: () => api.get({id:id}), refetchOnWindowFocus:false});
   
-  const { history, saveLastVisited, markLessonAsCompleted, getCompletedLessonsSet } = useSubscriptionState();
+  const { history, saveLastVisited, markItemAsCompleted, getCompletedItemsSet } = useSubscriptionState();
 
   const subscription = data?.items[0]
 
-  // Get the completion set for the current subscription
-  const completedLessons = useMemo(() => getCompletedLessonsSet(subscription?.id ?? null), [getCompletedLessonsSet, subscription?.id]);
+  const completedItems = useMemo(() => getCompletedItemsSet(subscription?.id ?? null), [getCompletedItemsSet, subscription?.id]);
 
   // Effect to set the initial state from history or default
   useEffect(() => {
@@ -173,7 +180,7 @@ const SubscriptionTaskViewerPage: React.FC = () => {
         // If history exists, use it
         setSelectedLevelId(savedState.levelId);
         setSelectedTaskId(savedState.taskId);
-        setSelectedLessonId(savedState.lessonId);
+        setSelectedItemId(savedState.itemId);
         setActiveCollapseKey(savedState.taskId);
       } else {
         // Otherwise, fall back to the default logic
@@ -189,14 +196,14 @@ const SubscriptionTaskViewerPage: React.FC = () => {
   
   // Effect to SAVE the current position whenever it changes
   useEffect(() => {
-    if (subscription?.id && selectedLevelId && selectedTaskId && selectedLessonId) {
+    if (subscription?.id && selectedLevelId && selectedTaskId && selectedItemId) {
       saveLastVisited(subscription.id, {
         levelId: selectedLevelId,
         taskId: selectedTaskId,
-        lessonId: selectedLessonId,
+        itemId: selectedItemId,
       });
     }
-  }, [selectedLevelId, selectedTaskId, selectedLessonId, subscription?.id, saveLastVisited]);
+  }, [selectedLevelId, selectedTaskId, selectedItemId, subscription?.id, saveLastVisited]);
   
   // Derive the current level object based on the selected ID
   const currentLevel = useMemo(() => {
@@ -212,13 +219,14 @@ const SubscriptionTaskViewerPage: React.FC = () => {
 
   // handling level changes
   useEffect(() => {
-    if (sortedTasks.length > 0 && !selectedTaskId) { // only run if taskId is not already set
+    if (sortedTasks.length > 0 && !selectedTaskId) {
         const firstUnlockedTask = sortedTasks.find((task) => !isTaskLocked(task.date));
         const taskToSelect = firstUnlockedTask || sortedTasks[0];
         if (taskToSelect) {
+            const firstItem = getTaskItems(taskToSelect)[0];
             setSelectedTaskId(taskToSelect.id);
             setActiveCollapseKey(taskToSelect.id);
-            setSelectedLessonId(taskToSelect.lessons?.[0]?.id || null);
+            setSelectedItemId(firstItem?.id || null);
         }
     }
   }, [sortedTasks, selectedTaskId]);
@@ -226,18 +234,25 @@ const SubscriptionTaskViewerPage: React.FC = () => {
 
 
   // Derive selected items
+
   const selectedTask = useMemo(() => sortedTasks.find((task) => task?.id === selectedTaskId), [selectedTaskId, sortedTasks]);
-  const selectedLesson = useMemo(() => selectedTask?.lessons?.find((lesson) => lesson?.id === selectedLessonId), [selectedTask, selectedLessonId]);
+  
+  // Derive the selected item (item or assignment)
+  const selectedItem = useMemo(() => {
+    if (!selectedTask || !selectedItemId) return undefined;
+    return getTaskItems(selectedTask).find(item => item.id === selectedItemId);
+  }, [selectedTask, selectedItemId]);
+  
+  
+
   const isCurrentTaskLocked = useMemo(() => (selectedTask ? isTaskLocked(selectedTask.date) : true), [selectedTask]);
 
   const hasMoreContent = useMemo(() => {
-    if (!selectedTaskId || !selectedTask || isCurrentTaskLocked) return false;
-    if (findNextLessonInTask(selectedTask, selectedLessonId)) return true;
-    if (findNextUnlockedTask(sortedTasks, selectedTaskId)) return true;
-    return false;
-  }, [selectedTask,selectedLessonId,sortedTasks,selectedTaskId,isCurrentTaskLocked]);
+    return findNextPlaylistItem(sortedTasks, selectedTaskId, selectedItemId) !== null;
+  }, [sortedTasks, selectedTaskId, selectedItemId]);
   
 
+  // Player Tour
   const { joyrideProps } = usePlayerTour({
     isDataLoaded: !!subscription,
     selectedTask,
@@ -248,17 +263,18 @@ const SubscriptionTaskViewerPage: React.FC = () => {
   // Handlers
   const togglePlaylist = () => setPlaylistVisible(!playlistVisible);
   const toggleChat = () => setIsChatVisible(!isChatVisible);
+
   const handleLevelChange = (levelId: string) => {
     setSelectedLevelId(levelId);
-    // When level changes, clear task/lesson to let the useEffect above pick the first one
+    // When level changes, clear task/item to let the useEffect above pick the first one
     setSelectedTaskId(null);
-    setSelectedLessonId(null);
+    setSelectedItemId(null);
   };
 
-  const handleLessonClick = (taskId: string, lessonId: string, isLocked: boolean) => {
+  const handleItemClick = (taskId: string, itemId: string, isLocked: boolean) => {
     if (isLocked) { toast.warning("هذه المهمة مقفلة حالياً."); return; }
     setSelectedTaskId(taskId);
-    setSelectedLessonId(lessonId);
+    setSelectedItemId(itemId);
     if (activeCollapseKey !== taskId) setActiveCollapseKey(taskId);
   };
 
@@ -279,10 +295,12 @@ const SubscriptionTaskViewerPage: React.FC = () => {
   };
 
   const handleMarkComplete = () => {
-    if (!subscription?.id || !selectedTaskId || !selectedLessonId || isLoadingComplete || isCurrentTaskLocked) return;
+    if (!subscription?.id || !selectedTaskId || !selectedItemId || isLoadingComplete || isCurrentTaskLocked){
+       return;
+    }
     
-    // Keep a reference to the lesson ID being completed
-    const lessonToCompleteId = selectedLessonId;
+    // Keep a reference to the item ID being completed
+    const itemToCompleteId = selectedItemId;
 
     // biome-ignore lint/suspicious/noAsyncPromiseExecutor: <explanation>
     const promise = new Promise<string>(async (resolve, reject) => {
@@ -290,32 +308,32 @@ const SubscriptionTaskViewerPage: React.FC = () => {
       await new Promise((res) => setTimeout(res, 1000));
       try {
         console.log(
-          `API: Mark lesson ${selectedLessonId} of task ${selectedTaskId} complete`
+          `API: Mark item ${selectedItemId} of task ${selectedTaskId} complete`
         );
-        resolve(selectedLesson?.title || "الدرس");
+        resolve(selectedItem?.title || "الدرس");
       } catch (error) {
         reject(error);
       }
     });
     toast.promise(promise, {
-      loading: "جاري إكمال الدرس...",
-      success: (lessonTitle) => {
-        // MARK THE LESSON AS COMPLETED IN LOCAL STORAGE
-        markLessonAsCompleted(subscription.id, lessonToCompleteId);
-
+      loading: "جاري إكمال المهمة...",
+      success: (itemTitle) => {
+        // MARK THE ITEM AS COMPLETED IN LOCAL STORAGE
+        markItemAsCompleted(subscription.id, itemToCompleteId);
         setIsLoadingComplete(false);
-        const nextLesson = findNextLessonInTask(selectedTask, selectedLessonId);
-        if (nextLesson) {
-          setSelectedLessonId(nextLesson.id);
-          return `أكملت "${lessonTitle}". التالي.`;
+        
+        const nextItemInfo = findNextPlaylistItem(sortedTasks, selectedTaskId, itemToCompleteId);
+
+        if (nextItemInfo) {
+          setSelectedTaskId(nextItemInfo.nextTaskId);
+          setSelectedItemId(nextItemInfo.nextItemId);
+          // If the task changed, update the active collapse key
+          if (nextItemInfo.nextTaskId !== selectedTaskId) {
+            setActiveCollapseKey(nextItemInfo.nextTaskId);
+          }
+          return `أكملت "${itemTitle}". التالي.`;
         }
-        const nextTask = findNextUnlockedTask(sortedTasks, selectedTaskId);
-        if (nextTask) {
-          setSelectedTaskId(nextTask.id);
-          setSelectedLessonId(nextTask.lessons?.[0]?.id || null);
-          setActiveCollapseKey(nextTask.id);
-          return `أكملت مهمة ${formatDateLocale(selectedTask?.date || "")}. التالي.`;
-        }
+        
         showCompletionModal();
         return "أكملت آخر مهمة متاحة!";
       },
@@ -369,7 +387,7 @@ const SubscriptionTaskViewerPage: React.FC = () => {
                     <Button icon={<MessageOutlined />} onClick={toggleChat} aria-label="عرض المحادثة">المحادثة</Button>
                   )}
                 </Space>
-                <SubscriptionBreadcrumb subscription={subscription} level={currentLevel} selectedTask={selectedTask} selectedLesson={selectedLesson}/>
+                <SubscriptionBreadcrumb subscription={subscription} level={currentLevel} selectedTask={selectedTask} selectedItem={selectedItem}/>
                 <Space>
                   {!playlistVisible && (
                     <Button icon={<UnorderedListOutlined />} onClick={togglePlaylist} aria-label="عرض قائمة المهام">القائمة</Button>
@@ -377,12 +395,12 @@ const SubscriptionTaskViewerPage: React.FC = () => {
                 </Space>
               </div>
               <div className="tour-step-content">
-                  <LessonContentViewer lesson={selectedLesson} />
+                  <LessonContentViewer item={selectedItem} />
               </div>
               <div className="tour-step-actions">
                 <TaskActions
                   selectedTask={selectedTask}
-                  selectedLesson={selectedLesson}
+                  selectedItem={selectedItem}
                   onMarkComplete={handleMarkComplete}
                   isLoadingComplete={isLoadingComplete}
                   isCurrentTaskLocked={isCurrentTaskLocked}
@@ -403,11 +421,11 @@ const SubscriptionTaskViewerPage: React.FC = () => {
             onLevelChange={handleLevelChange}
             levelTasks={sortedTasks}
             selectedTaskId={selectedTaskId}
-            selectedLessonId={selectedLessonId}
-            completedLessons={completedLessons}
+            selectedItemId={selectedItemId}
+            completedItems={completedItems}
             visible={playlistVisible}
             activeCollapseKey={activeCollapseKey}
-            onLessonClick={handleLessonClick}
+            onItemClick={handleItemClick}
             onCollapseChange={handleCollapseChange}
             onClose={togglePlaylist}
           />
@@ -419,159 +437,3 @@ const SubscriptionTaskViewerPage: React.FC = () => {
 };
 
 export default SubscriptionTaskViewerPage;
-
-
-
-
-// const mockSubscription: Subscription = {
-//     "id":"68011f309b0cc2e8bac3e2ae",
-//     "program":{
-//        "id":"67fe34827d47dcd153437d8d",
-//        "name":"صرح العربية",
-//        "state":"published",
-//        "thumbnail":"13a080b1-86b0-418a-8d0d-6a5509474c7d-Designer.png",
-//        "description":"برنامج يهدف إلى رفع السوية اللغوية للطالب.\nيبدأ البرنامج تدريجيًا من الأسس البسيطة ليناسب الطالب المبتدئ تمامًا والمتوسط.",
-//        "start":"2025-05-09T22:00:00.000Z",
-//        "end":"2025-06-09T22:00:00.000Z",
-//        "registrationStart":"2025-04-15T22:00:00.000Z",
-//        "registrationEnd":"2025-05-09T22:00:00.000Z",
-//        "levels": [
-//           {
-//             "id":"67fe34b07d47dcd153437d95",
-//             "name":"المستوى الأول: مدخل إلى علوم العربية",
-//             "start":"2025-05-09T22:00:00.000Z",
-//             "end":"2025-05-18T22:00:00.000Z",
-//             "programId":"67fe34827d47dcd153437d8d",
-//             "tasks":[
-//                 {
-//                   "id":"67fe364d7d47dcd153437df0",
-//                   "levelId":"67fe34b07d47dcd153437d95",
-//                   "date":"2025-05-03T22:00:00.000Z",
-//                   "note":"من البداية حتى الدقيقة 30",
-//                   "lessons":[
-//                       {
-//                         "id":"67fe354f7d47dcd153437dac",
-//                         "title":"المحاضرة الاولى - القسم الأول",
-//                         "type":"video",
-//                         "url":"https://youtu.be/1-RBbE3jffw?si=mxvlIWl0UtBgr-pT"
-//                       },
-//                       {
-//                         "id":"67fe354f7d47dcd153437dacxx",
-//                         "title":"المحاضرة 22 - القسم الأول",
-//                         "type":"video",
-//                         "url":"https://youtu.be/1-RBbE3jffw?si=mxvlIWl0UtBgr-pT"
-//                       }
-//                   ]
-//                 },
-//                 {
-//                   "id":"67fe365a7d47dcd153437df8",
-//                   "levelId":"67fe34b07d47dcd153437d95",
-//                   "date":"2025-05-04T22:00:00.000Z",
-//                   "lessons":[
-//                       {
-//                         "id":"67fe35627d47dcd153437db2",
-//                         "title":"المحاضرة الاولى - القسم الثاني",
-//                         "type":"video",
-//                         "url":"https://youtu.be/qxL-8UK6pT4?si=E9VrieJ7W9a4F04G"
-//                       }
-//                   ]
-//                 },
-//                 {
-//                   "id":"67fe36667d47dcd153437e01",
-//                   "levelId":"67fe34b07d47dcd153437d95",
-//                   "date":"2025-05-11T22:00:00.000Z",
-//                   "lessons":[
-//                       {
-//                         "id":"67fe35787d47dcd153437db8",
-//                         "title":"المحاضرة الثانية - القسم الأول",
-//                         "type":"video",
-//                         "url":"https://youtu.be/WshvbTd_PkM?si=DtTPYNUGxfiOEN-2"
-//                       }
-//                   ]
-//                 },
-//                 {
-//                   "id":"67fe36817d47dcd153437e0b",
-//                   "levelId":"67fe34b07d47dcd153437d95",
-//                   "date":"2025-05-12T22:00:00.000Z",
-//                   "lessons":[
-//                       {
-//                         "id":"67fe35957d47dcd153437dbe",
-//                         "title":"المحاضرة الثانية - القسم الثاني",
-//                         "type":"video",
-//                         "url":"https://youtu.be/uwKLuI-kvL4?si=RcbNKzd_TgCawCmF"
-//                       }
-//                   ]
-//                 },
-//                 {
-//                   "id":"67fe368d7d47dcd153437e16",
-//                   "levelId":"67fe34b07d47dcd153437d95",
-//                   "date":"2025-05-13T22:00:00.000Z",
-//                   "lessons":[
-//                       {
-//                         "id":"67fe35c67d47dcd153437dc4",
-//                         "title":"المحاضرة الثانية - القسم الثالث",
-//                         "type":"video",
-//                         "url":"https://youtu.be/7DyJZ_2pbRQ?si=3TBJIFWKvEVIRcpW"
-//                       }
-//                   ]
-//                 },
-//                 {
-//                   "id":"67fe36ad7d47dcd153437e22",
-//                   "levelId":"67fe34b07d47dcd153437d95",
-//                   "date":"2025-05-14T22:00:00.000Z",
-//                   "lessons":[
-//                       {
-//                         "id":"67fe35e27d47dcd153437dca",
-//                         "title":"الصرف 1",
-//                         "type":"video",
-//                         "url":"https://youtu.be/gWycbthEEdU?si=1INpitP3rIsXOZjw"
-//                       }
-//                   ]
-//                 },
-//                 {
-//                   "id":"67fe36c47d47dcd153437e2f",
-//                   "levelId":"67fe34b07d47dcd153437d95",
-//                   "date":"2025-05-16T22:00:00.000Z",
-//                   "lessons":[
-//                       {
-//                         "id":"67fe35f97d47dcd153437dd0",
-//                         "title":"الصرف 2",
-//                         "type":"video",
-//                         "url":"https://youtu.be/A3NcgzMvQ0E?si=MqKM3LM8vVZJ_89J"
-//                       }
-//                   ]
-//                 },
-//                 {
-//                   "id":"67fe36d17d47dcd153437e3d",
-//                   "levelId":"67fe34b07d47dcd153437d95",
-//                   "date":"2025-05-17T22:00:00.000Z",
-//                   "lessons":[
-//                       {
-//                         "id":"67fe36117d47dcd153437dd6",
-//                         "title":"المحاضرة الأخيرة - القسم الأول",
-//                         "type":"video",
-//                         "url":"https://youtu.be/F8SN770zqhs?si=ymIQMcan3ZkyULLO"
-//                       }
-//                   ]
-//                 },
-//                 {
-//                   "id":"67fe36e07d47dcd153437e4c",
-//                   "levelId":"67fe34b07d47dcd153437d95",
-//                   "date":"2025-05-18T22:00:00.000Z",
-//                   "lessons":[
-//                       {
-//                         "id":"67fe36257d47dcd153437ddc",
-//                         "title":"المحاضرة الأخيرة - القسم الثاني",
-//                         "type":"video",
-//                         "url":"https://youtu.be/vr1O51jWmk8?si=yvzj6c8gSnl3DQLi"
-//                       }
-//                   ]
-//                 }
-//             ]
-//           }
-//        ]
-//     },
-//     "subscriptionDate":"2025-04-16T12:48:40.005Z",
-//     "state":"active"
-//  } as Subscription;
-

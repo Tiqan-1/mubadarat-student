@@ -4,11 +4,11 @@ import { useState, useEffect, useCallback } from 'react';
 interface LastVisitedState {
   levelId: string;
   taskId: string;
-  lessonId: string;
+  itemId: string;
 }
 
 type HistoryStore = Record<string, LastVisitedState>; // Keyed by subscriptionId
-type CompletionStore = Record<string, string[]>; // Keyed by subscriptionId, value is array of lessonIds
+type CompletionStore = Record<string, string[]>; // Keyed by subscriptionId, value is array of itemIds
 
 // Helper function to safely get data from localStorage
 function getFromStorage<T>(key: string, defaultValue: T): T {
@@ -46,22 +46,22 @@ export function useSubscriptionState() {
     setHistory(prev => ({ ...prev, [subscriptionId]: state }));
   }, []);
 
-  // Memoized function to mark a lesson as complete for a specific subscription
-  const markLessonAsCompleted = useCallback((subscriptionId: string, lessonId: string) => {
+  // Memoized function to mark a item as complete for a specific subscription
+  const markItemAsCompleted = useCallback((subscriptionId: string, itemId: string) => {
     setCompletion(prev => {
       const currentCompleted = prev[subscriptionId] || [];
-      if (currentCompleted.includes(lessonId)) {
+      if (currentCompleted.includes(itemId)) {
         return prev; // No change needed
       }
       return {
         ...prev,
-        [subscriptionId]: [...currentCompleted, lessonId],
+        [subscriptionId]: [...currentCompleted, itemId],
       };
     });
   }, []);
   
-  // Memoized function to get completed lessons as a Set for efficient lookups
-  const getCompletedLessonsSet = useCallback((subscriptionId: string | null): Set<string> => {
+  // Memoized function to get completed items (lessons/assignments) as a Set for efficient lookups
+  const getCompletedItemsSet = useCallback((subscriptionId: string | null): Set<string> => {
     if (!subscriptionId || !completion[subscriptionId]) {
       return new Set();
     }
@@ -72,7 +72,7 @@ export function useSubscriptionState() {
   return {
     history,
     saveLastVisited,
-    markLessonAsCompleted,
-    getCompletedLessonsSet,
+    markItemAsCompleted,
+    getCompletedItemsSet,
   };
 }

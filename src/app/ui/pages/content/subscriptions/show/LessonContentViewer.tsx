@@ -1,16 +1,16 @@
 import type React from "react";
+
+import { Empty, Alert, Button, Card, Typography, Tooltip } from "antd";
 import {
-  Empty,
-  Alert,
-  Button,
-} from "antd";
-import {
-  DownloadOutlined
+  DownloadOutlined,
+  FormOutlined
 } from "@ant-design/icons"; 
 import "dayjs/locale/ar";
-import type { TaskLesson } from "@/app/api/services/subscriptions";
-import Paragraph from "antd/es/typography/Paragraph";
-import Title from "antd/es/typography/Title";
+import { getAssignmentUrl, type PlaylistItem, type TaskLesson } from "@/app/api/services/subscriptions";
+import { isAssignmentExpired } from "./SubscriptionTaskPlaylist";
+import dayjs from "dayjs";
+
+const { Title, Paragraph, Text } = Typography;
 
 function getEmbedUrl(
   lessonUrl: string,
@@ -39,10 +39,10 @@ function getYouTubeId(url: string): string | null {
 
 
 interface LessonContentViewerProps {
-  lesson: TaskLesson | undefined;
+  item: PlaylistItem  | undefined;
 }
 export  const LessonContentViewer: React.FC<LessonContentViewerProps> = ({
-  lesson,
+  item,
 }) => {
 
   const viewerContainerStyle: React.CSSProperties = {
@@ -82,26 +82,68 @@ export  const LessonContentViewer: React.FC<LessonContentViewerProps> = ({
     maxWidth: "600px",
     marginTop: "20px",
   };
-  if (!lesson) {
+  if (!item) {
     return (
       <div style={viewerContainerStyle}>
-        <Empty description="الرجاء تحديد درس من القائمة لعرضه." />
+        <Empty description="الرجاء تحديد درس أو واجب من القائمة لعرضه." />
       </div>
     );
   }
-  const embedUrl = getEmbedUrl(lesson.url, lesson.type);
+  
+    if (item.itemType === 'assignment') {
+      const isExpired = isAssignmentExpired(item.availableUntil);
+      const assignmentTypeLabel = item.type === 'exam' ? 'الاختبار' : 'الواجب';
+
+      return (
+        <div style={viewerContainerStyle}>
+          <Card style={{ width: '100%', maxWidth: 600, textAlign: 'center' }}>
+            <Title level={3}>
+              <FormOutlined style={{ marginRight: 8, color: '#1677ff' }} />
+              {assignmentTypeLabel}: {item.title}
+            </Title>
+            <Paragraph>
+              <Text>آخر موعد للتسليم: </Text>
+              <Tooltip title={dayjs(item.availableUntil).format('dddd, D MMMM YYYY, h:mm a')}>
+                <Text type={isExpired ? 'danger' : 'secondary'}>
+                  {dayjs(item.availableUntil).fromNow()}
+                </Text>
+              </Tooltip>
+              {isExpired && <Text type="danger"> (انتهى الوقت)</Text>}
+            </Paragraph>
+            <Tooltip title={isExpired ? 'لقد انتهى الموعد المحدد لهذا الواجب' : ''}>
+              {/* The antd Button needs a wrapper for the tooltip to work when disabled */}
+              <span>
+                <Button
+                  type="primary"
+                  size="large"
+                  href={getAssignmentUrl(item)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  disabled={isExpired}
+                  icon={<FormOutlined />}
+                >
+                  الانتقال إلى {assignmentTypeLabel}
+                </Button>
+              </span>
+            </Tooltip>
+          </Card>
+        </div>
+      );
+    }
+
+  const embedUrl = getEmbedUrl(item.url, item.type);
   const renderContent = () => {
-    switch (lesson.type) {
+    switch (item.type) {
       case "embedded":
       case "video":
-        if (embedUrl && getYouTubeId(lesson.url))
+        if (embedUrl && getYouTubeId(item.url))
           return (
             <div style={iframeContainerStyle}>
               <iframe
-                key={lesson.id}
+                key={item.id}
                 style={iframeStyle}
                 src={embedUrl}
-                title={lesson.title}
+                title={item.title}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
               />
@@ -110,16 +152,16 @@ export  const LessonContentViewer: React.FC<LessonContentViewerProps> = ({
         return (
           <div style={viewerContainerStyle}>
             {/* biome-ignore lint/a11y/useMediaCaption: <explanation> */}
-<video
+            <video
               controls
-              key={lesson.id}
+              key={item.id}
               style={{
                 maxWidth: "100%",
                 maxHeight: "calc(100% - 40px)",
                 borderRadius: "inherit",
               }}
             >
-              <source src={lesson.url} />
+              <source src={item.url} />
               متصفحك لا يدعم الفيديو.
             </video>
           </div>
@@ -128,10 +170,10 @@ export  const LessonContentViewer: React.FC<LessonContentViewerProps> = ({
         return (
           <div style={iframeContainerStyle}>
             <iframe
-              key={lesson.id}
+              key={item.id}
               style={iframeStyle}
-              src={lesson.url}
-              title={lesson.title}
+              src={item.url}
+              title={item.title}
               allowFullScreen={true}
                height="100%" 
             >
@@ -141,7 +183,7 @@ export  const LessonContentViewer: React.FC<LessonContentViewerProps> = ({
                 <Button
                   type="link"
                   icon={<DownloadOutlined />}
-                  href={lesson.url}
+                  href={item.url}
                   target="_blank"
                   download
                 >
@@ -154,9 +196,9 @@ export  const LessonContentViewer: React.FC<LessonContentViewerProps> = ({
       case "audio":
         return (
           <div style={viewerContainerStyle}>
-            <Title level={4}>{lesson.title}</Title>
+            <Title level={4}>{item.title}</Title>
             {/* biome-ignore lint/a11y/useMediaCaption: <explanation> */}
-<audio controls key={lesson.id} style={audioStyle} src={lesson.url}>
+<audio controls key={item.id} style={audioStyle} src={item.url}>
               متصفحك لا يدعم الصوت.
             </audio>
           </div>
@@ -167,12 +209,12 @@ export  const LessonContentViewer: React.FC<LessonContentViewerProps> = ({
             <Alert
               type="info"
               showIcon
-              message={`ملف وورد: ${lesson.title}`}
+              message={`ملف وورد: ${item.title}`}
               description={
                 <Button
                   type="primary"
                   icon={<DownloadOutlined />}
-                  href={lesson.url}
+                  href={item.url}
                   target="_blank"
                   download
                 >
@@ -188,15 +230,15 @@ export  const LessonContentViewer: React.FC<LessonContentViewerProps> = ({
             <Alert
               type="warning"
               showIcon
-              message={`ملف: ${lesson.title}`}
+              message={`ملف: ${item.title}`}
               description={
                 <>
-                  نوع الملف ({lesson.type}) غير مدعوم للعرض.
+                  نوع الملف ({item.type}) غير مدعوم للعرض.
                   <br />
                   <Button
                     type="link"
                     icon={<DownloadOutlined />}
-                    href={lesson.url}
+                    href={item.url}
                     target="_blank"
                     download
                   >

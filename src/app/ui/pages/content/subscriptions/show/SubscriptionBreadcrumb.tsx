@@ -8,22 +8,22 @@ import {
   BookOutlined,
 } from "@ant-design/icons";  
 import "dayjs/locale/ar";
-import { ProgramLevel, type LevelTask, type Subscription, type TaskLesson } from "@/app/api/services/subscriptions";
+import type { ProgramLevel, LevelTask, Subscription, PlaylistItem } from "@/app/api/services/subscriptions";
 
-import { formatDateLocale, getLessonIcon } from "./SubscriptionTaskPlaylist";
+import { formatDateLocale, getPlaylistItemIcon } from "./SubscriptionTaskPlaylist";
 
 
 interface SubscriptionBreadcrumbProps {
   subscription: Subscription | null;
   level: ProgramLevel | undefined;
   selectedTask: LevelTask | undefined;
-  selectedLesson: TaskLesson | undefined;
+  selectedItem: PlaylistItem | undefined;
 }
 export const SubscriptionBreadcrumb: React.FC<SubscriptionBreadcrumbProps> = ({
   subscription,
   level,
   selectedTask,
-  selectedLesson,
+  selectedItem,
 }) => {
   
   return (
@@ -52,11 +52,11 @@ export const SubscriptionBreadcrumb: React.FC<SubscriptionBreadcrumbProps> = ({
           </span>{" "}
         </Breadcrumb.Item>
       )}{" "}
-      {selectedLesson && (
+      {selectedItem && (
         <Breadcrumb.Item>
           {" "}
-          {getLessonIcon(selectedLesson.type)}{" "}
-          <span style={{ marginRight: "4px" }}>{selectedLesson.title}</span>{" "}
+          {getPlaylistItemIcon(selectedItem)}{" "}
+          <span style={{ marginRight: "4px" }}>{selectedItem.title}</span>{" "}
         </Breadcrumb.Item>
       )}{" "}
     </Breadcrumb>

@@ -21,18 +21,20 @@ import {
   LeftOutlined,
   DownOutlined,
   CheckCircleFilled,
+  FormOutlined,
+  ClockCircleOutlined,
 } from "@ant-design/icons"; 
 import "dayjs/locale/ar";
-import type { LevelTask, ProgramLevel, TaskLesson } from "@/app/api/services/subscriptions"; 
-import dayjs from "dayjs";
+import { getTaskItems, type LevelTask, type PlaylistItem, type ProgramLevel } from "@/app/api/services/subscriptions"; 
+import dayjs from "dayjs"; 
 
 const { Sider } = Layout;
 const { Text } = Typography;
 const { Panel } = Collapse;
 
 
-export const getLessonIcon = (type: TaskLesson["type"]): React.ReactNode => {
-  switch (type) {
+export const getPlaylistItemIcon = (item: PlaylistItem): React.ReactNode => {
+  switch (item.type) {
     case "video":
     case "embedded":
       return <VideoCameraOutlined />;
@@ -42,6 +44,10 @@ export const getLessonIcon = (type: TaskLesson["type"]): React.ReactNode => {
       return <AudioOutlined />;
     case "docx":
       return <FileWordOutlined />;
+    // Assignment types
+    case "exam":
+    case "homework":
+      return <FormOutlined />;
     default:
       return <LinkOutlined />;
   }
@@ -70,28 +76,39 @@ export  const isTaskLocked = (taskDate: string | undefined | null): boolean => {
     return true;
   }
 };
+export const isAssignmentExpired = (availableUntil: string | undefined | null): boolean => {
+  if (!availableUntil) return false;
+  try {
+    const deadline = dayjs(availableUntil);
+    if (!deadline.isValid()) return true;
+    return dayjs().isAfter(deadline);
+  } catch (e) {
+    return true;
+  }
+};
+
 interface SubscriptionTaskPlaylistProps {
   levelTasks: LevelTask[];
   selectedTaskId: string | null;
-  selectedLessonId: string | null;
-  completedLessons: Set<string>;
+  selectedItemId: string | null;
+  completedItems: Set<string>;
   visible: boolean;
   activeCollapseKey: string | string[] | undefined;
-  onLessonClick: (taskId: string, lessonId: string, isLocked: boolean) => void;
+  onItemClick: (taskId: string, itemId: string, isLocked: boolean) => void;
   onCollapseChange: (key: string | string[]) => void;
   onClose: () => void;
-  allLevels: ProgramLevel[]; // <-- New: All available levels for the dropdown
-  selectedLevelId: string | null; // <-- New: The ID of the currently active level
-  onLevelChange: (levelId: string) => void; // <-- New: Handler for changing the level
+  allLevels: ProgramLevel[]; 
+  selectedLevelId: string | null; 
+  onLevelChange: (levelId: string) => void; 
 }
 export const SubscriptionTaskPlaylist: React.FC<SubscriptionTaskPlaylistProps> = ({
   levelTasks,
   selectedTaskId,
-  selectedLessonId,
-  completedLessons,
+  selectedItemId,
+  completedItems,
   visible,
   activeCollapseKey,
-  onLessonClick,
+  onItemClick,
   onCollapseChange,
   onClose,
   allLevels,
@@ -111,7 +128,6 @@ export const SubscriptionTaskPlaylist: React.FC<SubscriptionTaskPlaylistProps> =
 
 
   const siderStyle: React.CSSProperties = {
-    // background: "#f0f2f5",
     padding: "10px",
     height: "calc(100vh - 64px)",
     overflowY: "auto",
@@ -126,7 +142,7 @@ export const SubscriptionTaskPlaylist: React.FC<SubscriptionTaskPlaylistProps> =
     paddingBottom: "10px",
     borderBottom: "1px solid #e0e0e0",
   };
-  const lessonItemStyleBase: React.CSSProperties = {
+  const itemStyleBase: React.CSSProperties = {
     padding: "8px 12px",
     cursor: "pointer",
     borderRadius: "4px",
@@ -137,14 +153,14 @@ export const SubscriptionTaskPlaylist: React.FC<SubscriptionTaskPlaylistProps> =
     display: "flex",
     alignItems: "center",
   };
-  const lessonItemStyleSelected: React.CSSProperties = {
-    ...lessonItemStyleBase,
+  const itemStyleSelected: React.CSSProperties = {
+    ...itemStyleBase,
     backgroundColor: "#1890ff",
     color: "#fff",
     fontWeight: 500,
   };
-  const lessonItemStyleLocked: React.CSSProperties = {
-    ...lessonItemStyleBase,
+  const itemStyleLocked: React.CSSProperties = {
+    ...itemStyleBase,
     cursor: "not-allowed",
     color: "#aaa",
     backgroundColor: "#fafafa",
@@ -197,16 +213,16 @@ export const SubscriptionTaskPlaylist: React.FC<SubscriptionTaskPlaylistProps> =
         onChange={onCollapseChange}
       >
         {levelTasks.map((task, taskIndex) => {
-          // --- Defensive check for task and task.date before rendering Panel ---
           if (!task || !task.id) {
             console.warn("Skipping rendering of invalid task object:", task);
-            return null; // Don't render anything for an invalid task
+            return null;
           }
-          // We still rely on the helper for lock status, which now handles bad dates
+
+          const playlistItems = getTaskItems(task);
+
           const isLocked = isTaskLocked(task.date);
-          const isCompletedTask = task.lessons.map(x => x.id).every(id => completedLessons.has(id));
-          const formattedDate = formatDateLocale(task.date); // Get formatted date or fallback
-          // --------------------------------------------------------------------------
+          const isCompletedTask = task.lessons.map(x => x.id).every(id => completedItems.has(id));
+          const formattedDate = formatDateLocale(task.date);
 
           const headerStyle = isLocked
             ? panelHeaderStyleLocked
@@ -238,54 +254,42 @@ export const SubscriptionTaskPlaylist: React.FC<SubscriptionTaskPlaylistProps> =
             >
               <List
                 size="small"
-                dataSource={task.lessons || []}
-                renderItem={(lesson) => {
-                  // --- Defensive check for lesson and lesson.id ---
-                  if (!lesson || !lesson.id) {
-                    console.warn(
-                      "Skipping rendering of invalid lesson object:",
-                      lesson
-                    );
-                    return null;
-                  }
-                  // ------------------------------------------------------
-                  const isCompleted = completedLessons.has(lesson.id);
-                  const isLessonSelected = lesson.id === selectedLessonId && task.id === selectedTaskId;
-                  const itemStyle = isLocked ? lessonItemStyleLocked : isLessonSelected ? lessonItemStyleSelected : lessonItemStyleBase;
-                  const textColor = isLocked ? "#aaa" : isLessonSelected ? "#fff" : "inherit";
+                dataSource={playlistItems}
+                renderItem={(item) => {
+                  const isCompleted = completedItems.has(item.id);
+                  const isSelected = item.id === selectedItemId && task.id === selectedTaskId;
+                  const isExpired = item.itemType === 'assignment' && isAssignmentExpired(item.availableUntil);
+                  const isItemLocked = isLocked || isExpired;
+
+                  const itemStyle = isItemLocked ? itemStyleLocked : isSelected ? itemStyleSelected : itemStyleBase;
+                  const textColor = isItemLocked ? "#aaa" : isSelected ? "#fff" : "inherit";
+                  
+                  const itemTitle = item.itemType === 'assignment' 
+                    ? `${item.type === 'exam' ? 'اختبار' : 'واجب'}: ${item.title}`
+                    : item.title;
+
+                  const tooltipTitle = isExpired ? 'انتهى وقت التسليم' : isLocked ? 'المهمة مقفلة حالياً' : '';
 
                   return (
-                    <Tooltip title={isLocked ? "هذه المهمة مقفلة حالياً" : ""}>
-                      <List.Item onClick={() => onLessonClick(task.id, lesson.id, isLocked)} style={itemStyle}>
+                    <Tooltip title={tooltipTitle}>
+                      <List.Item onClick={() => onItemClick(task.id, item.id, isItemLocked)} style={itemStyle}>
                         <List.Item.Meta
                           avatar={
                             <Space>
                               {isCompleted ? (
-                                <CheckCircleFilled style={{ color: isLessonSelected ? '#fff' : '#52c41a' }} />
+                                <CheckCircleFilled style={{ color: isSelected ? '#fff' : '#52c41a' }} />
+                              ) : isExpired ? (
+                                <ClockCircleOutlined style={{ color: textColor, marginLeft: "8px" }}/>
                               ) : (
                                 <span style={{ color: textColor, marginLeft: "8px" }}>
-                                  {getLessonIcon(lesson.type)}
+                                  {getPlaylistItemIcon(item)}
                                 </span>
                               )}
                             </Space>
                           }
-                          title={
-                            <Text
-                              style={{ color: textColor, whiteSpace: "normal" }}
-                            >
-                              {lesson.title || "درس بلا عنوان"}
-                            </Text>
-                          }
+                          title={<Text style={{ color: textColor }} delete={isExpired}>{itemTitle || "بدون عنوان"}</Text>}
                         />
-                        {isLessonSelected && !isLocked && (
-                          <PlayCircleOutlined
-                            style={{
-                              color: "#fff",
-                              fontSize: "16px",
-                              marginRight: "8px",
-                            }}
-                          />
-                        )}
+                        {isSelected && !isItemLocked && <PlayCircleOutlined style={{ color: "#fff" }} />}
                       </List.Item>
                     </Tooltip>
                   );

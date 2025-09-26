@@ -105,9 +105,17 @@ export interface Subscription {
 
 
 
+export const getAssignmentUrl = (assignment:TaskAssignment) => `/#/assignments/${assignment.id}`;
 
-
-
+// A discriminated union type to represent any item in the playlist
+export type PlaylistItem = (TaskLesson & { itemType: 'lesson' }) | (TaskAssignment & { itemType: 'assignment' });
+export function getTaskItems(task:LevelTask | undefined) : PlaylistItem[] {
+  const items: PlaylistItem[] = (task?.lessons || []).map(lesson => ({ ...lesson, itemType: 'lesson' }));
+  if (task?.assignment) {
+    items.push({ ...task.assignment, itemType: 'assignment' });
+  }
+  return items;
+}
 
 
 
