@@ -1,0 +1,44 @@
+name: Build and Deploy to mubadarah.github.io
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      
+      - name: Create .env file
+        run: |
+          echo "VITE_APP_BASE_API=${{ secrets.VITE_APP_BASE_API }}" >> .env
+          echo "VITE_APP_BASE_PATH=${{ secrets.VITE_APP_BASE_PATH }}" >> .env
+          echo "VITE_APP_HOMEPAGE=${{ secrets.VITE_APP_HOMEPAGE }}" >> .env
+          echo "VITE_APP_LOCALE=${{ secrets.VITE_APP_LOCALE }}" >> .env
+          echo "VITE_APP_NAME=${{ secrets.VITE_APP_NAME }}" >> .env
+          echo "VITE_APP_ROUTER_MODE=${{ secrets.VITE_APP_ROUTER_MODE }}" >> .env
+          echo "VITE_MOCK_ENABLED=${{ secrets.VITE_MOCK_ENABLED }}" >> .env
+          echo "VITE_PUSHER_APP_KEY=${{ secrets.VITE_PUSHER_APP_KEY }}" >> .env
+          echo "VITE_PUSHER_CLUSTER=${{ secrets.VITE_PUSHER_CLUSTER }}" >> .env
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build react app
+        run: npm run build
+
+      - name: Deploy to mubadarah.github.io repo
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          personal_token: ${{ secrets.MUBADARAH_DEPLOYMENT_TOKEN }}
+          external_repository: Mubadarah/mubadarah.github.io
+          publish_branch: main
+          publish_dir: ./dist
