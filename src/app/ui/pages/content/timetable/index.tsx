@@ -276,7 +276,7 @@ const CalendarTimetableView: React.FC<CalendarTimetableViewProps> = ({
                           avatar={getLessonIcon(lesson.type)}
                           title={
                             <Link
-                              href={lesson.url || "#"}
+                              href={`#/subscriptions/${task.subscriptionId}`} //lesson.url || "#"
                               target="_blank"
                               rel="noopener noreferrer"
                               disabled={!lesson.url}

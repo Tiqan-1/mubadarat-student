@@ -264,7 +264,7 @@ const SubscriptionTimetableView: React.FC<SubscriptionTimetableViewProps> = ({
                                       avatar={getLessonIcon(lesson.type)}
                                       title={
                                         <Link
-                                          href={lesson.url || "#"}
+                                          href={`#/subscriptions/${task.subscriptionId}`} //lesson.url || "#"
                                           target="_blank"
                                           rel="noopener noreferrer"
                                           disabled={!lesson.url}
@@ -389,7 +389,7 @@ const UnifiedTimetableView: React.FC<UnifiedTimetableViewProps> = ({
                                 avatar={getLessonIcon(lesson.type)}
                                 title={
                                   <Link
-                                    href={lesson.url || "#"}
+                                    href={`#/subscriptions/${task.programId}`} //lesson.url || "#"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     disabled={!lesson.url}
