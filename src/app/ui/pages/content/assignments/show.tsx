@@ -4,7 +4,7 @@ import { Card, Skeleton, Space } from "antd";
 import { toast } from "sonner";
 
 import assignmentsApi from "@/app/api/services/assignments";
-import { useNavigate, useParams } from "react-router";
+import { useParams } from "react-router";
 import { useState, useCallback } from "react";
 import {CustomFormRenderer} from 'dynamic-form-renderer';
 // import {i18n} from 'dynamic-form-renderer';
@@ -14,7 +14,7 @@ import AssignmentDetails from "./AssignmentDetails";
 // http://localhost:1112/#/assignments/68b0cc70e66f609cddbf1ec4
 export default function AssignmentPage() {
     const { t } = useTranslation();
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
     const { id:assignmentId } = useParams<{ id: string }>();
     const [assignmentForm, setAssignmentForm] = useState<any>();
 
@@ -75,16 +75,18 @@ export default function AssignmentPage() {
  
 
     return (
-        <Space direction="vertical" size="large" className="w-full">
-            <CustomFormRenderer
-                formDefinition={assignmentForm} 
-                onSubmit={onFinish}
-                startedAt={assignmentForm.startedAt}
-                durationInMinutes={assignmentData.durationInMinutes}
-                language={'ar'}
-                // showCorrection={true}
-                // isSubmitting={mutationSubmit.isPending} 
-            />
-        </Space>
+        <div className="min-h-screen text-gray-900 dark:text-white flex flex-col items-center p-4">
+                <Space direction="vertical" size="large" className="w-full">
+                    <CustomFormRenderer
+                        formDefinition={assignmentForm} 
+                        onSubmit={onFinish}
+                        startedAt={assignmentForm.startedAt}
+                        durationInMinutes={assignmentData.durationInMinutes}
+                        language={'ar'}
+                        // showCorrection={true}
+                        // isSubmitting={mutationSubmit.isPending} 
+                    ></CustomFormRenderer>
+                </Space> 
+        </div>
     );
 }
