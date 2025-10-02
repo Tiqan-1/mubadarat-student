@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { type Step, type CallBackProps, EVENTS, STATUS } from 'react-joyride-react19-compat';
+import { type Step, type CallBackProps, EVENTS, STATUS } from 'react-joyride';
 import type { LevelTask } from '@/app/api/services/subscriptions';
 
 // Define the props our hook will need from the parent component

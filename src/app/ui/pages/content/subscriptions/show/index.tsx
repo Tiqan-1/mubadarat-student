@@ -23,7 +23,7 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isToday from "dayjs/plugin/isToday";
 
 import {  toast } from "sonner";
-import Joyride from 'react-joyride-react19-compat';
+import Joyride from 'react-joyride';
 import api, { getCurrentOrNextLevel, getTaskItems, type PlaylistItem, type LevelTask } from "@/app/api/services/subscriptions";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
