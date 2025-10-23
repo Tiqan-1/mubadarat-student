@@ -6,7 +6,9 @@ import {
     Col,
     Tooltip,
     Modal,
-    Button} from 'antd';
+    Button,
+    Grid,
+} from 'antd';
 import {
     ClusterOutlined,
     PlayCircleOutlined,
@@ -26,112 +28,124 @@ import styles from '@/app/ui/components/ShineButton.module.css';
 dayjs.locale('ar');
 
 const { Title, Text, Paragraph } = Typography;
+const { useBreakpoint } = Grid;
 
 interface ProgramPageHeaderProps {
     program: Program | null | undefined;
 }
 
-
 const ProgramPageHeader: React.FC<ProgramPageHeaderProps> = ({ program }) => {
+    const screens = useBreakpoint();
+    
     if (!program) {
-        // Optional: Render a loading skeleton or null
         return null;
     }
 
     const navigate = useNavigate();
     const navigateToCourses = () => {
-      navigate(`/subscriptions/${program.subscriptionId}`);
+        navigate(`/subscriptions/${program.subscriptionId}`);
     };
 
-    
     const [modalOpen, setModalOpen] = useState(false);
     const handleCardClick = () => {
-      setModalOpen(true);
+        setModalOpen(true);
     };
 
-    // Calculate overview numbers safely
     const levelCount = program.levels?.length || 0;
     const totalTasks = program.levels?.reduce((sum, level) => sum + (level.tasks?.length || 0), 0) || 0;
     const totalLessons = program.levels?.reduce((sum, level) =>
         sum + (level.tasks?.reduce((taskSum, task) =>
             taskSum + (task.lessons?.length || 0), 0) || 0), 0) || 0;
 
-
-    // Style for the container
+    
     const programHeaderStyle: React.CSSProperties = {
-        // backgroundColor: '#003d2b', // Darker Green Background
         backgroundImage: 'linear-gradient(to right, #003d2b, #18a978)',
-        padding: '24px 32px', // Increased padding
+        padding: screens.md ? '24px 32px' : '16px', 
         borderRadius: '8px',
         color: '#fff',
         marginBottom: '24px',
         boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
         direction: 'rtl',
-    }; 
+    };
+
+    const buttonColStyle: React.CSSProperties = {
+        textAlign: screens.md ? 'end' : 'start', // Align right on desktop, left on mobile
+    };
+
     return (
         <div style={programHeaderStyle}>
-            <SubscriptionModal program={program} open={modalOpen} setOpen={setModalOpen}  msg={
-                                    program.subscriptionId ? t('app.actions.confirm-unsubscription') : `
-                        ${t('app.actions.confirm-subscription')}
-                        ${program?.subscriptionFormUrl==null ? '': "(سيظهر لك نموذج الإشتراك بعد التأكيد)"}
-                        `
+            <SubscriptionModal program={program} open={modalOpen} setOpen={setModalOpen} msg={
+                program.subscriptionId ? t('app.actions.confirm-unsubscription') : `
+                    ${t('app.actions.confirm-subscription')}
+                    ${program?.subscriptionFormUrl == null ? '' : "(سيظهر لك نموذج الإشتراك بعد التأكيد)"}
+                `
             } />
-            <Row justify="space-between" align="top" gutter={[16, 8]}>
-              <Col flex="auto">
-                    <Title level={2} style={{ color: '#fff', margin: '0 0 8px 0' }}>
+
+            {/* Title and Subscribe Button */}
+            <Row justify="space-between" align="middle" gutter={[16, 16]}>
+                <Col xs={24} md={18}>
+                    <Title level={screens.md ? 2 : 3} style={{ color: '#fff', margin: 0 }}>
                         {program.name || "برنامج بدون عنوان"}
                     </Title>
-              </Col>
-              <Col flex="auto" style={{textAlign: 'end'}}>
-                    <Button key="subscribe" onClick={handleCardClick} 
-                                style={{ background: '#fff', color: program.subscriptionId ? '#e50d0d':'#18a978', fontWeight: 'bold', border: 'none' }}
-                                >
-                        {program.subscriptionId ? 'إلغاء الإشتراك': 'إشترك'} 
+                </Col>
+                <Col xs={24} md={6} style={buttonColStyle}>
+                    <Button 
+                        key="subscribe" 
+                        onClick={handleCardClick}
+                        block={!screens.md} 
+                        style={{ background: '#fff', color: program.subscriptionId ? '#e50d0d' : '#18a978', fontWeight: 'bold', border: 'none' }}
+                    >
+                        {program.subscriptionId ? 'إلغاء الإشتراك' : 'إشترك'}
                     </Button>
-              </Col>
+                </Col>
             </Row>
 
-            <Row justify="space-between" align="top" gutter={[16, 8]}>
-              <Col flex="auto">
-                    <Paragraph style={{ color: '#eee', marginBottom: '16px' }} ellipsis={{ rows: 2, expandable: false }}>
+            {/* Description */}
+            <Row style={{ marginTop: '16px' }}>
+                <Col span={24}>
+                    <Paragraph style={{ color: '#eee', marginBottom: 0 }} ellipsis={{ rows: 2, expandable: false }}>
                         {program.description || "لا يوجد وصف لهذا البرنامج."}
                     </Paragraph>
-              </Col>
+                </Col>
             </Row>
 
-            <Row justify="space-between" align="top" gutter={[16, 8]}>
-              <Col flex="auto">
+            {/* Stats and Continue Button */}
+            <Row justify="space-between" align="middle" gutter={[16, 16]} style={{ marginTop: '24px' }}>
+                <Col xs={24} md={18}>
                     <Space size="large" wrap>
                         <Tooltip title="عدد المستويات">
                             <Space> <ClusterOutlined /> <Text style={{ color: '#fff' }}>{levelCount} مستويات</Text> </Space>
                         </Tooltip>
-                         <Tooltip title="إجمالي عدد المهام">
+                        <Tooltip title="إجمالي عدد المهام">
                             <Space> <UnorderedListOutlined /> <Text style={{ color: '#fff' }}>{totalTasks} مهام</Text> </Space>
                         </Tooltip>
                         <Tooltip title="إجمالي عدد الدروس">
-                             <Space> <VideoCameraOutlined /> <Text style={{ color: '#fff' }}>{totalLessons} دروس</Text> </Space>
+                            <Space> <VideoCameraOutlined /> <Text style={{ color: '#fff' }}>{totalLessons} دروس</Text> </Space>
                         </Tooltip>
                     </Space>
-              </Col>
-              {
-                program.subscriptionId && 
-                <Col flex="auto" style={{textAlign: 'end'}}>
-                      <Button 
-                      className={styles.shineButton}
-                      onClick={navigateToCourses}  icon={<PlayCircleOutlined />} style={{ background: '#fff', color: '#18a978', fontWeight: 'bold', border: 'none' }}>
-                            مواصلة الدراسة
-                      </Button>
                 </Col>
-              }
-
+                
+                {program.subscriptionId &&
+                    <Col xs={24} md={6} style={buttonColStyle}>
+                        <Button
+                            className={styles.shineButton}
+                            onClick={navigateToCourses}
+                            icon={<PlayCircleOutlined />}
+                            // Make button full-width on mobile
+                            block={!screens.md} 
+                            style={{ background: '#fff', color: '#18a978', fontWeight: 'bold', border: 'none' }}
+                        >
+                            مواصلة الدراسة
+                        </Button>
+                    </Col>
+                }
             </Row>
-
-
         </div>
     );
 };
 
 export default ProgramPageHeader;
+
 
 function SubscriptionModal({ msg, program, open, setOpen}: { msg:string, program:Program, open:boolean, setOpen: Dispatch<SetStateAction<boolean>>}) {
     const [confirmLoading, setConfirmLoading] = useState(false);
@@ -189,4 +203,4 @@ function SubscriptionModal({ msg, program, open, setOpen}: { msg:string, program
           <p>{program.name}</p>
         </Modal> 
     );
-  };
+};

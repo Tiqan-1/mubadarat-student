@@ -68,7 +68,7 @@ export default function ProgramPage() {
     return (
         // Assuming ConfigProvider is handled at a higher level for the whole app
         // If not, wrap with <ConfigProvider direction="rtl" locale={arEG}> here
-        <Content style={{ padding: '8px 48px', marginTop: '8px' }}> {/* Add padding */}
+        <Content style={{ padding: '8px 8px', marginTop: '8px' }}> {/* Add padding */}
 
             {/* --- Welcome Section --- */}
             <div style={welcomeSectionStyle}>

@@ -128,7 +128,6 @@ export const SubscriptionTaskPlaylist: React.FC<SubscriptionTaskPlaylistProps> =
 
 
   const siderStyle: React.CSSProperties = {
-    padding: "10px",
     height: "calc(100vh - 64px)",
     overflowY: "auto",
     transition: "all 0.2s ease-in-out",

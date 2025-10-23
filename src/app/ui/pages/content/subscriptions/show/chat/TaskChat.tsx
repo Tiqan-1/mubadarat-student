@@ -146,12 +146,12 @@ export const TaskChat: React.FC<TaskChatProps> = ({ chatRoomId, visible, onClose
     const container = listEndRef.current;
     if (container) {
       // Use a small timeout to ensure the DOM has updated before we scroll
-      setTimeout(() => {
-        container.scrollTo({
-          top: container.scrollHeight,
-          behavior: 'smooth',
-        });
-      }, 50); // 50ms is a safe delay
+      // setTimeout(() => {
+      //   container.scrollTo({
+      //     top: container.scrollHeight,
+      //     behavior: 'smooth',
+      //   });
+      // }, 50);
     }
   }, [messages, isSuccess]);
 

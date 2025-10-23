@@ -1,5 +1,5 @@
  
-import { Layout, Typography, Row, Space, Col, Card } from 'antd';   
+import { Layout, Typography, Row, Col, Card, Tag } from 'antd';   
 import { useQuery } from '@tanstack/react-query'; 
 import ProgramPageHeader from './program-header';
 import { useParams } from 'react-router';
@@ -27,19 +27,11 @@ const formatHeaderDate = (dateString: string | undefined | null): string => {
 const CourseProgramPage = () => { 
 	const { id } = useParams(); 
     const {data:programsList} = useQuery({queryKey: ['programs', id], queryFn: () => api.getOpen({id:id}), refetchOnWindowFocus:false});
-    // const {data:subscriptionsList} = useQuery({queryKey: ['subscriptions', id], queryFn: () => subscriptionsApi.get({programId:id}), refetchOnWindowFocus:false});
     const program = programsList?.items.find((value) => value.id === id)
     
-    // const subscriptions = subscriptionsList?.items ?? []; 
-    // if(subscriptions.length > 0 && program!==undefined){
-    //   program.isSubscribed = (subscriptions.filter((value) => value.program.id === program.id).length ?? 0) > 0;
-    // }
-    
-    const dates = [
-      { title: 'بدء التسجيل', date: formatHeaderDate(program?.registrationStart) },
-      { title: "إنتهاء التسجيل", date: formatHeaderDate(program?.registrationEnd) },
-      { title: "إنطلاق البرنامج", date: formatHeaderDate(program?.start) },
-      { title: "إنتهاء البرنامج", date: formatHeaderDate(program?.end) },
+    const periods = [
+      { title: 'فترة التسجيل', from: formatHeaderDate(program?.registrationStart), to: formatHeaderDate(program?.registrationEnd) },
+      { title: "فترة البرنامج", from: formatHeaderDate(program?.start), to: formatHeaderDate(program?.end) }, 
     ];
 
   return (
@@ -50,12 +42,16 @@ const CourseProgramPage = () => {
         
         
             <div style={{ padding: '30px' }}>
-            <Row gutter={16}>
-                {dates.map((item, index) => (
+        <Row gutter={[24, 24]} >
+                {periods.map((item, index) => (
                   // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                  <Col span={6} key={`k${index}`}>
+                  <Col sm={24} md={12} key={`k${index}`}>
                       <Card title={item.title} bordered={false}>
-                      <p>{item.date}</p>
+                      <p>من
+                          <Tag color="green">{item.from}</Tag>
+                          إلى
+                          <Tag color="red" style={{ marginRight: '5px' }}>{item.to}</Tag>
+                      </p>
                       </Card>
                   </Col>
                 ))}
@@ -65,10 +61,13 @@ const CourseProgramPage = () => {
 
       <div style={{ margin: '32px 0' }}>
         <Title level={3} style={{ marginBottom: '24px' }}>{ t('app.levels.title') }</Title>
-        <Row gutter={[24, 24]}>
-          <Space>
-          {program?.levels.map((item) => (<LevelItemCard key={item.id} level={item} program={program!} />))}
-          </Space>
+        <Row gutter={[24, 24]} >
+          {program?.levels.map((item, index) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+              <Col sm={24} md={12} key={`k${index}`}>
+                <LevelItemCard key={item.id} level={item} program={program!} />
+              </Col>
+          ))}
         </Row>
       </div>
 

@@ -48,7 +48,7 @@ const LevelItemCard: React.FC<LevelCardProps> = ({ level }) => {
                         <CalendarOutlined style={{ marginLeft: '8px' }} />
                         فترة المستوى:
                     </Text>
-                    <Text>
+                    <Text>من
                         <Tag color="green">{formatLevelDate(level.start)}</Tag>
                          إلى
                         <Tag color="red" style={{ marginRight: '5px' }}>{formatLevelDate(level.end)}</Tag>
