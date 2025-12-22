@@ -8,6 +8,8 @@ on:
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
+    environment: 
+      name: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }}
     steps:
       - name: Checkout source repo
         uses: actions/checkout@v3
