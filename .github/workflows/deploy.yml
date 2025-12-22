@@ -26,6 +26,7 @@ jobs:
           echo "VITE_APP_HOMEPAGE=${{ vars.VITE_APP_HOMEPAGE }}" >> .env
           echo "VITE_APP_LOCALE=${{ vars.VITE_APP_LOCALE }}" >> .env
           echo "VITE_APP_NAME=${{ vars.VITE_APP_NAME }}" >> .env
+          echo "VITE_APP_STORAGE_NAME=${{ vars.VITE_APP_STORAGE_NAME }}" >> .env
           echo "VITE_APP_ROUTER_MODE=${{ vars.VITE_APP_ROUTER_MODE }}" >> .env
           echo "VITE_MOCK_ENABLED=${{ vars.VITE_MOCK_ENABLED }}" >> .env
           echo "VITE_PUSHER_APP_KEY=${{ secrets.VITE_PUSHER_APP_KEY }}" >> .env
