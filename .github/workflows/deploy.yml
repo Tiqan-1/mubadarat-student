@@ -41,6 +41,6 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           personal_token: ${{ secrets.MUBADARAH_DEPLOYMENT_TOKEN }}
-          external_repository: Mubadarah/mubadarah.github.io
+          external_repository: Mubadarah/${{ github.ref == 'refs/heads/main' && 'mubadarah.github.io' || 'dev' }}
           publish_branch: main
           publish_dir: ./dist
