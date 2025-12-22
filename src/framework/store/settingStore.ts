@@ -50,8 +50,8 @@ const useSettingStore = create<SettingStore>()(
 			},
 		}),
 		{
-			name: StorageEnum.Settings, // name of the item in the storage (must be unique)
-			storage: createJSONStorage(() => localStorage), // (optional) by default, 'localStorage' is used
+			name: `${import.meta.env.VITE_APP_STORAGE_NAME as string}-settings`,
+			storage: createJSONStorage(() => localStorage),
 			partialize: (state) => ({ [StorageEnum.Settings]: state.settings }),
 		},
 	),
