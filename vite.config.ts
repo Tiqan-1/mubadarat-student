@@ -19,37 +19,37 @@ export default defineConfig(({ mode }) => {
       port: 1112,
       proxy: {
         "/api": {
-          target: "https://mubadarah.ce-svcs.cc/",
+          target: env.VITE_APP_PROXY_URL,
           changeOrigin: true,
           // rewrite: (path) => path.replace(/^\/api/, ""),
           secure: false,
         },
       },
     },
-  
+
     plugins: [
       react(),
       tailwindcss(),
-  
+
       tsconfigPaths(), // add {resolve.alias} from tsconfig {paths} automatically 
-  
+
       vanillaExtractPlugin({
         identifiers: ({ debugId }) => `${debugId}`,
       }),
-      
+
       createSvgIconsPlugin({
         iconDirs: [path.resolve(process.cwd(), 'src/assets/icons')], // Specify the icon folder to be cached
         symbolId: 'icon-[dir]-[name]', // Specify symbolId format
       }),
     ],
 
-    
+
     resolve: {
       alias: {
         'react': path.resolve(__dirname, './node_modules/react'),
         'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
       },
     },
-  
+
   }
 })
