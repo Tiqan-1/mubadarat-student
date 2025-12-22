@@ -30,6 +30,7 @@
 				"useKeyWithClickEvents": "off" 
 			},
 			"style": {
+	          "useSelfClosingElements": "off",
 			  "noNonNullAssertion": "off"
 			}
 		}
