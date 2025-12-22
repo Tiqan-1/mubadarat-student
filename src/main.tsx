@@ -14,7 +14,7 @@ import App from "@/app/ui/App";
   
 // // mock api
 // import worker from "@/framework/mock";
-// // 🥵 start service worker mock in development mode
+// // start service worker mock in development mode
 // worker.start({ onUnhandledRequest: "bypass" });
 
 async function enableMocking() {
